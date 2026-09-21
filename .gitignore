@@ -12,3 +12,4 @@ logs/
 .claude-replay.*
 .tmp-*
 .next
+04_Assets/
