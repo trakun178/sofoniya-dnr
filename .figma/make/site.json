@@ -1,0 +1,10 @@
+{
+  "description": "Offers premium furniture reupholstery services in the Donetsk region with instant cost estimates, interactive showcases, and easy online booking.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
