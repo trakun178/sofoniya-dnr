@@ -70,6 +70,37 @@ const FABRICS = [
   { name: "Натуральная кожа", cls: "f-leather" },
 ];
 
+const COLLECTIONS = [
+  {
+    name: "Madras",
+    sup: "Leder99",
+    type: "Пигментированная кожа",
+    thick: "0,9–1,1 мм",
+    shades: 21,
+  },
+  {
+    name: "Ravenna",
+    sup: "Leder99",
+    type: "Пигментированная кожа",
+    thick: "1,2–1,4 мм",
+    shades: 16,
+  },
+  {
+    name: "Lusso",
+    sup: "Leder99",
+    type: "Полуанилиновая кожа",
+    thick: "0,9–1,1 мм",
+    shades: 8,
+  },
+  {
+    name: "Corinne",
+    sup: "Leder99",
+    type: "Полуанилиновая кожа",
+    thick: "0,9–1,1 мм",
+    shades: 0,
+  },
+];
+
 const STEPS = [
   {
     t: "Заявка",
@@ -284,6 +315,16 @@ function ContactFab() {
           rel="noreferrer"
         >
           {svg(<path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" />, 18)}
+        </a>
+        <a
+          className="cfab-item"
+          style={{ background: "#7A5AF8" }}
+          title="MAX"
+          href="https://max.ru/channel_peretyajka"
+          target="_blank"
+          rel="noreferrer"
+        >
+          <span style={{ fontWeight: 800, fontSize: 11 }}>MAX</span>
         </a>
         <a
           className="cfab-item"
@@ -540,6 +581,41 @@ export default function App() {
         </button>
       </section>
 
+      {/* КОЛЛЕКЦИИ */}
+    <section id="collections" className="section" style={{ background: '#fff' }}>
+      <h2 style={{ textAlign: 'center', fontSize: 'clamp(26px, 3.4vw, 38px)', marginBottom: 12 }}>
+        Коллекции, с которыми мы работаем
+      </h2>
+      <p style={{ textAlign: 'center', color: '#8D99AE', maxWidth: 720, margin: '0 auto 40px' }}>
+        SOFONIYA — это про перетяжку, а не про продажу тканей. Но мы работаем с поставщиками напрямую,
+        поэтому привозим любую коллекцию под ваш проект. Понравился материал? Закажем его отдельно
+        для вас — цены на материал уточните у мастера.
+      </p>
+      <div className="cols-grid">
+        {COLLECTIONS.map(c => (
+          <div className="col-card" key={c.name}>
+            <span className="col-badge">{c.sup}</span>
+            <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 24, margin: '10px 0 6px' }}>
+              {c.name}
+            </h3>
+            <p className="col-type">{c.type}</p>
+            <p className="col-meta">
+              Толщина: {c.thick}
+              {c.shades > 0 && <> · Оттенков: {c.shades}</>}
+            </p>
+            <div className="col-photo">фото коллекции</div>
+            <a className="col-btn" href="https://t.me/dnr_peretyajka_mebeli" target="_blank" rel="noreferrer">
+              Рассчитать перетяжку в этой коже →
+            </a>
+          </div>
+        ))}
+      </div>
+      <p className="cols-note">
+        Работаем с коллекциями Leder99 (натуральная и искусственная кожа) и Vektor (мебельные ткани).
+        Материал под ваш проект привозим под заказ — стоимость материала уточняйте при замере.
+      </p>
+    </section>
+
       {/* ЭТАПЫ */}
       <section className="section" id="process">
         <h2>Как мы работаем</h2>
@@ -649,9 +725,8 @@ export default function App() {
         </div>
       </footer>
 
-      <Fab onChat={() => setModal("Чат с сайта")} />
-      {modal && <LeadModal service={modal} onClose={() => setModal(null)} />}
       <ContactFab />
+      {modal && <LeadModal service={modal} onClose={() => setModal(null)} />}
     </div>
   );
 }

@@ -422,6 +422,93 @@ button {
   margin: 0 auto;
 }
 
+/* Коллекции */
+.cols-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.col-card {
+  position: relative;
+  background: #f7f6f3;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(26, 26, 46, 0.08);
+  transition: 0.25s;
+}
+.col-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 30px rgba(26, 26, 46, 0.14);
+}
+.col-badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: #1a1a2e;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+.col-type {
+  color: #ff6b00;
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+.col-meta {
+  color: #8d99ae;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+.col-photo {
+  height: 120px;
+  border-radius: 10px;
+  background: radial-gradient(circle at 35% 30%, #a9683c, #6e3d1e);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffffaa;
+  font-size: 12px;
+  margin-bottom: 14px;
+}
+.col-btn {
+  display: block;
+  text-align: center;
+  background: #ff6b00;
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 10px;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: 0.2s;
+}
+.col-btn:hover {
+  background: #e05f00;
+}
+.cols-note {
+  text-align: center;
+  color: #8d99ae;
+  font-size: 13px;
+  max-width: 760px;
+  margin: 32px auto 0;
+}
+@media (max-width: 960px) {
+  .cols-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 560px) {
+  .cols-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ЭТАПЫ */
 .steps {
   display: grid;
@@ -839,4 +926,7 @@ button {
 }
 .cfab-menu .cfab-item:nth-child(4) {
   transition-delay: 0.15s;
+}
+.cfab-menu .cfab-item:nth-child(5) {
+  transition-delay: 0.2s;
 }
