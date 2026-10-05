@@ -66,40 +66,34 @@ const FABRICS = [
   { name: "Жаккард", cls: "f-jacquard" },
   { name: "Вельвет", cls: "f-cord" },
   { name: "Искусственный замш", cls: "f-suede" },
-  { name: "Экокожа (иск. кожа)", cls: "f-navy" },
-  { name: "Натуральная кожа", cls: "f-leather" },
+  { name: "Экокожа (иск. кожа)", cls: "f-navy", sub: "6 коллекций" },
+  { name: "Натуральная кожа", cls: "f-leather", sub: "11 коллекций" },
 ];
 
-const COLLECTIONS = [
-  {
-    name: "Madras",
-    sup: "Leder99",
-    type: "Пигментированная кожа",
-    thick: "0,9–1,1 мм",
-    shades: 21,
-  },
-  {
-    name: "Ravenna",
-    sup: "Leder99",
-    type: "Пигментированная кожа",
-    thick: "1,2–1,4 мм",
-    shades: 16,
-  },
-  {
-    name: "Lusso",
-    sup: "Leder99",
-    type: "Полуанилиновая кожа",
-    thick: "0,9–1,1 мм",
-    shades: 8,
-  },
-  {
-    name: "Corinne",
-    sup: "Leder99",
-    type: "Полуанилиновая кожа",
-    thick: "0,9–1,1 мм",
-    shades: 0,
-  },
-];
+const LEATHER = {
+  natural: [
+    { name: "Madras", type: "Пигментированная", thick: "0,9–1,1 мм" },
+    { name: "Ravenna", type: "Пигментированная", thick: "1,2–1,4 мм" },
+    { name: "Simphony", type: "Полуанилиновая", thick: "1,3–1,5 мм" },
+    { name: "Lusso", type: "Полуанилиновая", thick: "0,9–1,1 мм" },
+    { name: "Estoril", type: "Полуанилиновая", thick: "1,2–1,4 мм" },
+    { name: "Royalton", type: "Полуанилиновая", thick: "1,3–1,5 мм" },
+    { name: "Corinne", type: "Полуанилиновая", thick: "0,9–1,1 мм" },
+    { name: "Misty", type: "Полуанилиновая", thick: "1,1–1,3 мм" },
+    { name: "Scottsdale", type: "Анилиновая", thick: "0,9–1,1 мм" },
+    { name: "Dollaro", type: "Натуральная кожа", thick: "" },
+    { name: "Uruguay", type: "Натуральная кожа", thick: "" },
+    // { name: 'НАЗВАНИЕ', type: 'Натуральная кожа', thick: '' }, ← 4-я коллекция Vektor, жду имя
+  ],
+  artificial: [
+    { name: "Madras", type: "Искусственная", thick: "0,85 мм" },
+    { name: "Ravenna", type: "Искусственная", thick: "0,85 мм" },
+    { name: "Grifon", type: "Искусственная", thick: "" },
+    { name: "Nitro", type: "Полиуретан (PU)", thick: "" },
+    { name: "Phantom", type: "Полиэстер (PL)", thick: "" },
+    { name: 'Uruguay Eco', type: 'Экокожа', thick: '' },
+  ],
+};
 
 const STEPS = [
   {
@@ -570,6 +564,7 @@ export default function App() {
             <div className="swatch" key={f.name}>
               <span className={`sw ${f.cls}`} />
               <small>{f.name}</small>
+              {f.sub && <small className="sw-sub">{f.sub}</small>}
             </div>
           ))}
         </div>
@@ -581,40 +576,73 @@ export default function App() {
         </button>
       </section>
 
-      {/* КОЛЛЕКЦИИ */}
-    <section id="collections" className="section" style={{ background: '#fff' }}>
-      <h2 style={{ textAlign: 'center', fontSize: 'clamp(26px, 3.4vw, 38px)', marginBottom: 12 }}>
-        Коллекции, с которыми мы работаем
-      </h2>
-      <p style={{ textAlign: 'center', color: '#8D99AE', maxWidth: 720, margin: '0 auto 40px' }}>
-        SOFONIYA — это про перетяжку, а не про продажу тканей. Но мы работаем с поставщиками напрямую,
-        поэтому привозим любую коллекцию под ваш проект. Понравился материал? Закажем его отдельно
-        для вас — цены на материал уточните у мастера.
-      </p>
-      <div className="cols-grid">
-        {COLLECTIONS.map(c => (
-          <div className="col-card" key={c.name}>
-            <span className="col-badge">{c.sup}</span>
-            <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 24, margin: '10px 0 6px' }}>
-              {c.name}
-            </h3>
-            <p className="col-type">{c.type}</p>
-            <p className="col-meta">
-              Толщина: {c.thick}
-              {c.shades > 0 && <> · Оттенков: {c.shades}</>}
-            </p>
-            <div className="col-photo">фото коллекции</div>
-            <a className="col-btn" href="https://t.me/dnr_peretyajka_mebeli" target="_blank" rel="noreferrer">
-              Рассчитать перетяжку в этой коже →
-            </a>
+      {/* КОЛЛЕКЦИИ КОЖИ */}
+      <section
+        id="collections"
+        className="section"
+        style={{ background: "#fff" }}
+      >
+        <h2
+          style={{
+            textAlign: "center",
+            fontSize: "clamp(26px, 3.4vw, 38px)",
+            marginBottom: 12,
+          }}
+        >
+          Коллекции кожи
+        </h2>
+        <p
+          style={{
+            textAlign: "center",
+            color: "#8D99AE",
+            maxWidth: 760,
+            margin: "0 auto 40px",
+          }}
+        >
+          Мы работаем с поставщиками напрямую, поэтому привозим любую коллекцию
+          под ваш проект. Понравился материал? Закажем его отдельно для вас —
+          стоимость материала уточните у мастера.
+        </p>
+
+        <div className="leather-group">
+          <h3 className="leather-title">
+            Натуральная кожа · {LEATHER.natural.length} коллекций
+          </h3>
+          <div className="chips">
+            {LEATHER.natural.map((c) => (
+              <span className="chip" key={"n-" + c.name}>
+                <b>{c.name}</b>
+                <small>
+                  {c.type}
+                  {c.thick ? " · " + c.thick : ""}
+                </small>
+              </span>
+            ))}
           </div>
-        ))}
-      </div>
-      <p className="cols-note">
-        Работаем с коллекциями Leder99 (натуральная и искусственная кожа) и Vektor (мебельные ткани).
-        Материал под ваш проект привозим под заказ — стоимость материала уточняйте при замере.
-      </p>
-    </section>
+        </div>
+
+        <div className="leather-group">
+          <h3 className="leather-title">
+            Искусственная кожа · {LEATHER.artificial.length} коллекций
+          </h3>
+          <div className="chips">
+            {LEATHER.artificial.map((c) => (
+              <span className="chip" key={"a-" + c.name}>
+                <b>{c.name}</b>
+                <small>
+                  {c.type}
+                  {c.thick ? " · " + c.thick : ""}
+                </small>
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <p className="cols-note">
+          Не нашли нужную коллекцию? Привезём под заказ вместе с замером —
+          просто покажите мастеру фото или название.
+        </p>
+      </section>
 
       {/* ЭТАПЫ */}
       <section className="section" id="process">
