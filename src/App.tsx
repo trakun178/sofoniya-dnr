@@ -527,7 +527,18 @@ function Home() {
         <div className="grid-fabrics">
           {CATALOG.map((f) => (
             <Link to={`/t/${f.id}`} className="swatch" key={f.id}>
-              <span className={`sw ${f.cls}`} />
+              <span className={`sw ${f.cls}`}>
+                {f.collections.length > 0 && (
+                  <img
+                    src={coverOf(f, f.collections[0])}
+                    alt={f.name}
+                    loading="lazy"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                )}
+              </span>
               <small>{f.name}</small>
               {f.collections.length > 0 && (
                 <small className="sw-sub">

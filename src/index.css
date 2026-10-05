@@ -384,6 +384,17 @@ button {
     inset 0 -6px 14px rgba(0, 0, 0, 0.18);
   transition: 0.25s;
 }
+.sw {
+  position: relative;
+  overflow: hidden;
+}
+.sw img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* текстура заполняет круг без искажений */
+  border-radius: 50%; /* обрезаем по форме круга */
+  display: block;
+}
 .swatch:hover .sw {
   transform: scale(1.08);
 }
