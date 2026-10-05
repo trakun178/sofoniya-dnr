@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
+import { HashRouter, Routes, Route, Link, useParams } from 'react-router-dom';
+import { CATALOG } from './data/catalog';
 
 /* ============ SOFONIYA · лендинг v3 (наш проект) ============
    ФОТО: положи в /public файлы hero.jpg, before.jpg, after.jpg
@@ -56,44 +58,6 @@ const SERVICES = [
     price: "от 3 000 ₽",
   },
 ];
-
-const FABRICS = [
-  { name: "Велюр", cls: "f-gray" },
-  { name: "Флок", cls: "f-red" },
-  { name: "Шенилл", cls: "f-green" },
-  { name: "Рогожка", cls: "f-beige" },
-  { name: "Букле", cls: "f-orange" },
-  { name: "Жаккард", cls: "f-jacquard" },
-  { name: "Вельвет", cls: "f-cord" },
-  { name: "Искусственный замш", cls: "f-suede" },
-  { name: "Экокожа (иск. кожа)", cls: "f-navy", sub: "6 коллекций" },
-  { name: "Натуральная кожа", cls: "f-leather", sub: "11 коллекций" },
-];
-
-const LEATHER = {
-  natural: [
-    { name: "Madras", type: "Пигментированная", thick: "0,9–1,1 мм" },
-    { name: "Ravenna", type: "Пигментированная", thick: "1,2–1,4 мм" },
-    { name: "Simphony", type: "Полуанилиновая", thick: "1,3–1,5 мм" },
-    { name: "Lusso", type: "Полуанилиновая", thick: "0,9–1,1 мм" },
-    { name: "Estoril", type: "Полуанилиновая", thick: "1,2–1,4 мм" },
-    { name: "Royalton", type: "Полуанилиновая", thick: "1,3–1,5 мм" },
-    { name: "Corinne", type: "Полуанилиновая", thick: "0,9–1,1 мм" },
-    { name: "Misty", type: "Полуанилиновая", thick: "1,1–1,3 мм" },
-    { name: "Scottsdale", type: "Анилиновая", thick: "0,9–1,1 мм" },
-    { name: "Dollaro", type: "Натуральная кожа", thick: "" },
-    { name: "Uruguay", type: "Натуральная кожа", thick: "" },
-    // { name: 'НАЗВАНИЕ', type: 'Натуральная кожа', thick: '' }, ← 4-я коллекция Vektor, жду имя
-  ],
-  artificial: [
-    { name: "Madras", type: "Искусственная", thick: "0,85 мм" },
-    { name: "Ravenna", type: "Искусственная", thick: "0,85 мм" },
-    { name: "Grifon", type: "Искусственная", thick: "" },
-    { name: "Nitro", type: "Полиуретан (PU)", thick: "" },
-    { name: "Phantom", type: "Полиэстер (PL)", thick: "" },
-    { name: 'Uruguay Eco', type: 'Экокожа', thick: '' },
-  ],
-};
 
 const STEPS = [
   {
@@ -427,7 +391,7 @@ function BeforeAfter() {
   );
 }
 
-export default function App() {
+function Home() {
   const [modal, setModal] = useState<string | null>(null);
   const [menu, setMenu] = useState(false);
 
@@ -560,13 +524,15 @@ export default function App() {
       <section className="section" id="fabrics">
         <h2>Выберите идеальную ткань</h2>
         <div className="grid-fabrics">
-          {FABRICS.map((f) => (
-            <div className="swatch" key={f.name}>
-              <span className={`sw ${f.cls}`} />
-              <small>{f.name}</small>
-              {f.sub && <small className="sw-sub">{f.sub}</small>}
-            </div>
-          ))}
+      {CATALOG.map((f) => (
+         <Link to={`/t/${f.id}`} className="swatch" key={f.id}>
+      <span className={`sw ${f.cls}`} />
+      <small>{f.name}</small>
+      {f.collections.length > 0 && (
+        <small className="sw-sub">{f.collections.length} коллекций</small>
+      )}
+    </Link>
+    ))}
         </div>
         <button
           className="btn btn-primary"
@@ -576,7 +542,7 @@ export default function App() {
         </button>
       </section>
 
-      {/* КОЛЛЕКЦИИ КОЖИ */}
+      {/* ВИТРИНА КОЛЛЕКЦИЙ */}
       <section
         id="collections"
         className="section"
@@ -589,7 +555,7 @@ export default function App() {
             marginBottom: 12,
           }}
         >
-          Коллекции кожи
+          Витрина коллекций
         </h2>
         <p
           style={{
@@ -599,49 +565,28 @@ export default function App() {
             margin: "0 auto 40px",
           }}
         >
-          Мы работаем с поставщиками напрямую, поэтому привозим любую коллекцию
-          под ваш проект. Понравился материал? Закажем его отдельно для вас —
-          стоимость материала уточните у мастера.
+          По одной представительной коллекции от каждого типа материала. Нажмите
+          на кружок выше, чтобы открыть все коллекции типа.
         </p>
-
-        <div className="leather-group">
-          <h3 className="leather-title">
-            Натуральная кожа · {LEATHER.natural.length} коллекций
-          </h3>
-          <div className="chips">
-            {LEATHER.natural.map((c) => (
-              <span className="chip" key={"n-" + c.name}>
+        <div className="showcase">
+          {CATALOG.filter((t) => t.collections.length > 0).map((t) => {
+            const c = t.collections[0];
+            return (
+              <Link className="show-card" key={t.id} to={`/t/${t.id}/${c.id}`}>
+                <span
+                  className={`sw ${t.cls}`}
+                  style={{ width: 84, height: 84 }}
+                />
                 <b>{c.name}</b>
-                <small>
-                  {c.type}
+                <small>{t.name}</small>
+                <small className="show-kind">
+                  {c.kind}
                   {c.thick ? " · " + c.thick : ""}
                 </small>
-              </span>
-            ))}
-          </div>
+              </Link>
+            );
+          })}
         </div>
-
-        <div className="leather-group">
-          <h3 className="leather-title">
-            Искусственная кожа · {LEATHER.artificial.length} коллекций
-          </h3>
-          <div className="chips">
-            {LEATHER.artificial.map((c) => (
-              <span className="chip" key={"a-" + c.name}>
-                <b>{c.name}</b>
-                <small>
-                  {c.type}
-                  {c.thick ? " · " + c.thick : ""}
-                </small>
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <p className="cols-note">
-          Не нашли нужную коллекцию? Привезём под заказ вместе с замером —
-          просто покажите мастеру фото или название.
-        </p>
       </section>
 
       {/* ЭТАПЫ */}
@@ -756,5 +701,109 @@ export default function App() {
       <ContactFab />
       {modal && <LeadModal service={modal} onClose={() => setModal(null)} />}
     </div>
+  );
+}
+function MiniHeader() {
+  return (
+    <header className="mini-header">
+      <Link to="/" className="mini-logo">SOFONIYA</Link>
+      <Link to="/" className="back">← На главную</Link>
+    </header>
+  );
+}
+function MiniFooter() {
+  return (
+    <footer className="mini-footer">
+      © {new Date().getFullYear()} SOFONIYA · Перетяжка мебели в ДНР ·{' '}
+      <a href="tel:+79490983532">+7 949 098-35-32</a>
+    </footer>
+  );
+}
+function EmptyNote() {
+  return (
+    <p className="empty-note">
+      «Коллекции этого материала наполняем. На замере мастер привезёт образцы и поможет с выбором.»
+    </p>
+  );
+}
+
+function TypePage() {
+  const { typeId } = useParams();
+  const t = CATALOG.find((x) => x.id === typeId);
+  if (!t) return <MiniHeader />;
+  return (
+    <div>
+      <MiniHeader />
+      <section className="section">
+        <h1 className="page-title">{t.name}</h1>
+        {t.collections.length === 0 ? <EmptyNote /> : (
+          <div className="cols-grid">
+            {t.collections.map((c) => (
+              <Link className="col-card" key={c.id} to={`/t/${t.id}/${c.id}`}>
+                <div className="col-photo">фото скоро</div>
+                <h3>{c.name}</h3>
+                <p className="col-type">{c.kind}</p>
+                {c.thick && <p className="col-meta">Толщина: {c.thick}</p>}
+              </Link>
+            ))}
+          </div>
+        )}
+        <div style={{ textAlign: 'center', marginTop: 32 }}>
+          <a className="btn btn-primary" href="https://t.me/dnr_peretyajka_mebeli" target="_blank" rel="noreferrer">
+            Привезти образцы бесплатно
+          </a>
+        </div>
+      </section>
+      <MiniFooter />
+    </div>
+  );
+}
+
+function CollectionPage() {
+  const { typeId, colId } = useParams();
+  const t = CATALOG.find((x) => x.id === typeId);
+  const c = t?.collections.find((x) => x.id === colId);
+  if (!t || !c) return <MiniHeader />;
+  return (
+    <div>
+      <MiniHeader />
+      <section className="section">
+        <Link to={`/t/${t.id}`} className="back">← {t.name}: все коллекции</Link>
+        <h1 className="page-title">{c.name}</h1>
+        <p className="col-type">{c.kind}{c.thick ? ' · толщина ' + c.thick : ''}</p>
+        <div className="shades-grid">
+          {c.shades.length === 0 ? (
+            <p className="empty-note">
+              Фото цветов готовим. Напишите в Telegram — пришлём палитру оттенков за 5 минут.
+            </p>
+          ) : (
+            c.shades.map((s) => (
+              <div className="shade" key={s.name}>
+                <span className="shade-photo" style={{ background: s.hex }} />
+                <small>{s.name}</small>
+              </div>
+            ))
+          )}
+        </div>
+        <div style={{ textAlign: 'center', marginTop: 32 }}>
+          <a className="btn btn-primary" href="https://t.me/dnr_peretyajka_mebeli" target="_blank" rel="noreferrer">
+            Рассчитать перетяжку в этой коллекции
+          </a>
+        </div>
+      </section>
+      <MiniFooter />
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <HashRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/t/:typeId" element={<TypePage />} />
+        <Route path="/t/:typeId/:colId" element={<CollectionPage />} />
+      </Routes>
+    </HashRouter>
   );
 }
