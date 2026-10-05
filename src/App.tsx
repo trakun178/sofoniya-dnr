@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { HashRouter, Routes, Route, Link, useParams } from "react-router-dom";
-import { CATALOG } from "./data/catalog";
+import { CATALOG, coverOf, shadeOf } from "./data/catalog";
+import type { FabricType, Collection } from "./data/catalog";
 
 /* ============ SOFONIYA · лендинг v3 (наш проект) ============
    ФОТО: положи в /public файлы hero.jpg, before.jpg, after.jpg
@@ -575,9 +576,7 @@ function Home() {
             const c = t.collections[0];
             return (
               <Link className="show-card" key={t.id} to={`/t/${t.id}/${c.id}`}>
-                <span className={`show-media ${t.cls}`}>
-                  {/* Сюда позже встанет фото: <img src={`/collections/${c.id}/cover.jpg`} alt={c.name} /> */}
-                </span>
+                <CoverImg t={t} c={c} />
                 <span className="show-body">
                   <b>{c.name}</b>
                   <small>{t.name}</small>
@@ -706,6 +705,20 @@ function Home() {
     </div>
   );
 }
+function CoverImg({ t, c }: { t: FabricType; c: Collection }) {
+  return (
+    <span className={`show-media ${t.cls}`}>
+      <img
+        src={coverOf(t, c)}
+        alt={`${c.name} — ${t.name}`}
+        loading="lazy"
+        onError={(e) => {
+          e.currentTarget.style.display = "none";
+        }}
+      />
+    </span>
+  );
+}
 function MiniHeader() {
   return (
     <header className="mini-header">
@@ -750,7 +763,16 @@ function TypePage() {
           <div className="cols-grid">
             {t.collections.map((c) => (
               <Link className="col-card" key={c.id} to={`/t/${t.id}/${c.id}`}>
-                <div className="col-photo">фото скоро</div>
+                <div className="col-photo">
+                  <img
+                    src={coverOf(t, c)}
+                    alt={c.name}
+                    loading="lazy"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                </div>
                 <h3>{c.name}</h3>
                 <p className="col-type">{c.kind}</p>
                 {c.thick && <p className="col-meta">Толщина: {c.thick}</p>}
@@ -800,7 +822,16 @@ function CollectionPage() {
           ) : (
             c.shades.map((s) => (
               <div className="shade" key={s.name}>
-                <span className="shade-photo" style={{ background: s.hex }} />
+                {s.photo ? (
+                  <img
+                    className="shade-photo"
+                    src={shadeOf(t, c, s.photo)}
+                    alt={`${c.name} — ${s.name}`}
+                    loading="lazy"
+                  />
+                ) : (
+                  <span className="shade-photo" style={{ background: s.hex }} />
+                )}
                 <small>{s.name}</small>
               </div>
             ))

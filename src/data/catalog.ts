@@ -1,3 +1,7 @@
+export const coverOf = (t: FabricType, c: Collection) =>
+  `/collections/${t.id}/${c.id}/cover.jpg`;
+export const shadeOf = (t: FabricType, c: Collection, file: string) =>
+  `/collections/${t.id}/${c.id}/${file}`;
 export type Shade = { name: string; hex: string; photo?: string };
 export type Collection = {
   id: string;
@@ -49,12 +53,12 @@ export const CATALOG: FabricType[] = [
     name: "Экокожа (иск. кожа)",
     cls: "f-navy",
     collections: [
-      C("madras-eco", "Madras", "Искусственная", "0,85 мм"),
-      C("ravenna-eco", "Ravenna", "Искусственная", "0,85 мм"),
+      C("madras", "Madras", "Искусственная", "0,85 мм"),
+      C("ravenna", "Ravenna", "Искусственная", "0,85 мм"),
       C("grifon", "Grifon", "Искусственная"),
       C("nitro", "Nitro", "Полиуретан (PU)"),
       C("phantom", "Phantom", "Полиэстер (PL)"),
-      C("uruguay-eco", "Uruguay Eco", "Экокожа"),
+      C("uruguay", "Uruguay", "Экокожа"),
     ],
   },
   {
