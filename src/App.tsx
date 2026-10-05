@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
-import { HashRouter, Routes, Route, Link, useParams } from 'react-router-dom';
-import { CATALOG } from './data/catalog';
+import { HashRouter, Routes, Route, Link, useParams } from "react-router-dom";
+import { CATALOG } from "./data/catalog";
 
 /* ============ SOFONIYA · лендинг v3 (наш проект) ============
    ФОТО: положи в /public файлы hero.jpg, before.jpg, after.jpg
@@ -524,15 +524,17 @@ function Home() {
       <section className="section" id="fabrics">
         <h2>Выберите идеальную ткань</h2>
         <div className="grid-fabrics">
-      {CATALOG.map((f) => (
-         <Link to={`/t/${f.id}`} className="swatch" key={f.id}>
-      <span className={`sw ${f.cls}`} />
-      <small>{f.name}</small>
-      {f.collections.length > 0 && (
-        <small className="sw-sub">{f.collections.length} коллекций</small>
-      )}
-    </Link>
-    ))}
+          {CATALOG.map((f) => (
+            <Link to={`/t/${f.id}`} className="swatch" key={f.id}>
+              <span className={`sw ${f.cls}`} />
+              <small>{f.name}</small>
+              {f.collections.length > 0 && (
+                <small className="sw-sub">
+                  {f.collections.length} коллекций
+                </small>
+              )}
+            </Link>
+          ))}
         </div>
         <button
           className="btn btn-primary"
@@ -573,16 +575,17 @@ function Home() {
             const c = t.collections[0];
             return (
               <Link className="show-card" key={t.id} to={`/t/${t.id}/${c.id}`}>
-                <span
-                  className={`sw ${t.cls}`}
-                  style={{ width: 84, height: 84 }}
-                />
-                <b>{c.name}</b>
-                <small>{t.name}</small>
-                <small className="show-kind">
-                  {c.kind}
-                  {c.thick ? " · " + c.thick : ""}
-                </small>
+                <span className={`show-media ${t.cls}`}>
+                  {/* Сюда позже встанет фото: <img src={`/collections/${c.id}/cover.jpg`} alt={c.name} /> */}
+                </span>
+                <span className="show-body">
+                  <b>{c.name}</b>
+                  <small>{t.name}</small>
+                  <small className="show-kind">
+                    {c.kind}
+                    {c.thick ? " · " + c.thick : ""}
+                  </small>
+                </span>
               </Link>
             );
           })}
@@ -706,15 +709,19 @@ function Home() {
 function MiniHeader() {
   return (
     <header className="mini-header">
-      <Link to="/" className="mini-logo">SOFONIYA</Link>
-      <Link to="/" className="back">← На главную</Link>
+      <Link to="/" className="mini-logo">
+        SOFONIYA
+      </Link>
+      <Link to="/" className="back">
+        ← На главную
+      </Link>
     </header>
   );
 }
 function MiniFooter() {
   return (
     <footer className="mini-footer">
-      © {new Date().getFullYear()} SOFONIYA · Перетяжка мебели в ДНР ·{' '}
+      © {new Date().getFullYear()} SOFONIYA · Перетяжка мебели в ДНР ·{" "}
       <a href="tel:+79490983532">+7 949 098-35-32</a>
     </footer>
   );
@@ -722,7 +729,8 @@ function MiniFooter() {
 function EmptyNote() {
   return (
     <p className="empty-note">
-      «Коллекции этого материала наполняем. На замере мастер привезёт образцы и поможет с выбором.»
+      «Коллекции этого материала наполняем. На замере мастер привезёт образцы и
+      поможет с выбором.»
     </p>
   );
 }
@@ -736,7 +744,9 @@ function TypePage() {
       <MiniHeader />
       <section className="section">
         <h1 className="page-title">{t.name}</h1>
-        {t.collections.length === 0 ? <EmptyNote /> : (
+        {t.collections.length === 0 ? (
+          <EmptyNote />
+        ) : (
           <div className="cols-grid">
             {t.collections.map((c) => (
               <Link className="col-card" key={c.id} to={`/t/${t.id}/${c.id}`}>
@@ -748,8 +758,13 @@ function TypePage() {
             ))}
           </div>
         )}
-        <div style={{ textAlign: 'center', marginTop: 32 }}>
-          <a className="btn btn-primary" href="https://t.me/dnr_peretyajka_mebeli" target="_blank" rel="noreferrer">
+        <div style={{ textAlign: "center", marginTop: 32 }}>
+          <a
+            className="btn btn-primary"
+            href="https://t.me/dnr_peretyajka_mebeli"
+            target="_blank"
+            rel="noreferrer"
+          >
             Привезти образцы бесплатно
           </a>
         </div>
@@ -768,13 +783,19 @@ function CollectionPage() {
     <div>
       <MiniHeader />
       <section className="section">
-        <Link to={`/t/${t.id}`} className="back">← {t.name}: все коллекции</Link>
+        <Link to={`/t/${t.id}`} className="back">
+          ← {t.name}: все коллекции
+        </Link>
         <h1 className="page-title">{c.name}</h1>
-        <p className="col-type">{c.kind}{c.thick ? ' · толщина ' + c.thick : ''}</p>
+        <p className="col-type">
+          {c.kind}
+          {c.thick ? " · толщина " + c.thick : ""}
+        </p>
         <div className="shades-grid">
           {c.shades.length === 0 ? (
             <p className="empty-note">
-              Фото цветов готовим. Напишите в Telegram — пришлём палитру оттенков за 5 минут.
+              Фото цветов готовим. Напишите в Telegram — пришлём палитру
+              оттенков за 5 минут.
             </p>
           ) : (
             c.shades.map((s) => (
@@ -785,8 +806,13 @@ function CollectionPage() {
             ))
           )}
         </div>
-        <div style={{ textAlign: 'center', marginTop: 32 }}>
-          <a className="btn btn-primary" href="https://t.me/dnr_peretyajka_mebeli" target="_blank" rel="noreferrer">
+        <div style={{ textAlign: "center", marginTop: 32 }}>
+          <a
+            className="btn btn-primary"
+            href="https://t.me/dnr_peretyajka_mebeli"
+            target="_blank"
+            rel="noreferrer"
+          >
             Рассчитать перетяжку в этой коллекции
           </a>
         </div>
