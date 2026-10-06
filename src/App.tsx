@@ -530,8 +530,8 @@ function Home() {
               <span className={`sw ${f.cls}`}>
                 {f.collections.length > 0 && (
                   <img
-                    src={coverOf(f, f.collections[0])}
-                    alt={f.name}
+                    src="/sketches/weave.jpg"
+                    alt={`Структура материала: ${f.name}`}
                     loading="lazy"
                     onError={(e) => {
                       e.currentTarget.style.display = "none";
