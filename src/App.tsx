@@ -187,6 +187,19 @@ function LogoMark() {
   );
 }
 
+/* ---------- Bitrix24 кнопка связи (FAB) ---------- */
+function openBitrixChat() {
+  const tryClick = (n: number) => {
+    const el =
+      document.querySelector<HTMLElement>(
+        ".b24-widget-button-openline_livechat span",
+      ) || document.querySelector<HTMLElement>(".b24-widget-button");
+    if (el) el.click();
+    else if (n > 0) setTimeout(() => tryClick(n - 1), 400); // виджет ещё грузится — подождём
+  };
+  tryClick(5);
+}
+
 /* ---------- Плавающая кнопка связи (FAB) ---------- */
 function ContactFab() {
   const [i, setI] = useState(0);
@@ -248,7 +261,10 @@ function ContactFab() {
           className="cfab-item"
           style={{ background: "#27AE60" }}
           title="Чат на сайте"
-          onClick={() => setOpen(false)}
+          onClick={() => {
+            setOpen(false);
+            openBitrixChat();
+          }}
         >
           {svg(
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />,

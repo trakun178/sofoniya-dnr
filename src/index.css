@@ -1090,3 +1090,8 @@ button {
     position: static !important;
   }
 }
+/* Кнопка Битрикс невидима: чат открывает наша зелёная */
+.b24-widget-button {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
