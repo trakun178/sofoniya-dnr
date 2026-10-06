@@ -188,14 +188,30 @@ function LogoMark() {
 }
 
 /* ---------- Bitrix24 кнопка связи (FAB) ---------- */
+function findB24Button(): HTMLElement | null {
+  const sel =
+    '.b24-widget-button-openline_livechat span, .b24-widget-button, [class*="b24-widget-button"]';
+  const search = (root: Document | ShadowRoot): HTMLElement | null => {
+    const direct = root.querySelector<HTMLElement>(sel);
+    if (direct) return direct;
+    const hosts = root.querySelectorAll("*");
+    for (const el of Array.from(hosts)) {
+      const sr = (el as Element & { shadowRoot?: ShadowRoot }).shadowRoot;
+      if (sr) {
+        const inner = search(sr);
+        if (inner) return inner;
+      }
+    }
+    return null;
+  };
+  return search(document);
+}
+
 function openBitrixChat() {
   const tryClick = (n: number) => {
-    const el =
-      document.querySelector<HTMLElement>(
-        ".b24-widget-button-openline_livechat span",
-      ) || document.querySelector<HTMLElement>(".b24-widget-button");
+    const el = findB24Button();
     if (el) el.click();
-    else if (n > 0) setTimeout(() => tryClick(n - 1), 400); // виджет ещё грузится — подождём
+    else if (n > 0) setTimeout(() => tryClick(n - 1), 400);
   };
   tryClick(5);
 }
@@ -210,6 +226,32 @@ function ContactFab() {
     const t = setInterval(() => setI((v) => (v + 1) % 4), 3000);
     return () => clearInterval(t);
   }, [open]);
+
+  useEffect(() => {
+    const hideB24 = () => {
+      const collect = (root: Document | ShadowRoot): Element[] => {
+        let out: Element[] = Array.from(
+          root.querySelectorAll('[class*="b24-widget-button"]'),
+        );
+        root.querySelectorAll("*").forEach((el) => {
+          const sr = (el as Element & { shadowRoot?: ShadowRoot }).shadowRoot;
+          if (sr) out = out.concat(collect(sr));
+        });
+        return out;
+      };
+      collect(document).forEach((el) => {
+        (el as HTMLElement).style.setProperty("opacity", "0", "important");
+        (el as HTMLElement).style.setProperty(
+          "pointer-events",
+          "none",
+          "important",
+        );
+      });
+    };
+    hideB24();
+    const t = setInterval(hideB24, 1500); // виджет может перерисоваться — держим его кнопку скрытой
+    return () => clearInterval(t);
+  }, []);
 
   const svg = (d: React.ReactNode, size = 22) => (
     <svg
