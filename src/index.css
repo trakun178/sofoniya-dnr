@@ -1077,3 +1077,16 @@ button {
     font-size: 11px;
   }
 }
+/* Шаги на мобильном: без налезаний */
+@media (max-width: 700px) {
+  #process > div {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  #process > div > * {
+    margin: 0 !important;
+    transform: none !important;
+    position: static !important;
+  }
+}
