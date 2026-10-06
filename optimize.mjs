@@ -3,62 +3,55 @@ import { readdir, stat } from "fs/promises";
 import { join } from "path";
 
 const ROOT = "public";
-const FORMATS = [".jpg", ".jpeg", ".png", ".webp"];
+const FORMATS = [".jpg", ".jpeg", ".png"];
 const QUALITY = 80;
-const MAX_WIDTH = 1600; // ресайз только если шире 1600px (для обложек коллекций хватит)
-const MIN_KB = 30; // не трогаем файлы меньше 30 КБ
+const MAX_WIDTH = 1600;
+const MIN_KB = 30;
 
 async function walk(dir) {
   const entries = await readdir(dir, { withFileTypes: true });
-  const files = [];
+  const out = [];
   for (const e of entries) {
     const p = join(dir, e.name);
-    if (e.isDirectory()) files.push(...(await walk(p)));
-    else files.push(p);
+    if (e.isDirectory()) out.push(...(await walk(p)));
+    else out.push(p);
   }
-  return files;
+  return out;
 }
 
-const files = await walk(ROOT).then((arr) =>
-  arr.filter((f) => FORMATS.some((ext) => f.toLowerCase().endsWith(ext))),
+const files = (await walk(ROOT)).filter((f) =>
+  FORMATS.some((e) => f.toLowerCase().endsWith(e)),
 );
-
-let savedTotal = 0,
-  count = 0,
-  skipped = 0;
+let count = 0,
+  savedTotal = 0;
 
 for (const f of files) {
   const orig = (await stat(f)).size;
-  if (orig < MIN_KB * 1024) {
-    skipped++;
-    continue;
-  }
-
+  if (orig < MIN_KB * 1024) continue;
   try {
     let pipe = sharp(f).rotate();
     const meta = await sharp(f).metadata();
     if (meta.width && meta.width > MAX_WIDTH) {
       pipe = pipe.resize({ width: MAX_WIDTH, withoutEnlargement: true });
     }
-
-    const out = f.toLowerCase().endsWith(".png")
-      ? await pipe.webp({ quality: QUALITY, lossless: false }).toBuffer()
+    const isPng = f.toLowerCase().endsWith(".png");
+    const buf = isPng
+      ? await pipe
+          .png({ compressionLevel: 9, palette: true, quality: 80 })
+          .toBuffer()
       : await pipe.jpeg({ quality: QUALITY, mozjpeg: true }).toBuffer();
-
-    const saved = orig - out.length;
-    if (saved > 0) {
-      await sharp(out).toFile(f); // перезаписываем на месте
-      savedTotal += saved;
+    if (orig - buf.length > 0) {
+      await sharp(buf).toFile(f + ".opt"); // ← новый файл, оригинал не трогаем
+      savedTotal += orig - buf.length;
       count++;
       console.log(
-        `✓ ${f}: ${(orig / 1024) | 0} KB → ${(out.length / 1024) | 0} KB (−${(saved / 1024) | 0} KB)`,
+        `✓ ${f}: ${(orig / 1024) | 0} → ${(buf.length / 1024) | 0} KB`,
       );
     }
-  } catch (err) {
-    console.log(`✗ ${f}: ${err.message}`);
+  } catch (e) {
+    console.log(`✗ ${f}: ${e.message}`);
   }
 }
-
 console.log(
-  `\n🎯 Готово: оптимизировано ${count}, пропущено ${skipped}, сэкономлено ${(savedTotal / 1024 / 1024).toFixed(2)} МБ`,
+  `\n🎯 Файлов: ${count}, экономия ${(savedTotal / 1024 / 1024).toFixed(2)} МБ. Теперь запусти замену.`,
 );
