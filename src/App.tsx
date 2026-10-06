@@ -528,16 +528,14 @@ function Home() {
           {CATALOG.map((f) => (
             <Link to={`/t/${f.id}`} className="swatch" key={f.id}>
               <span className={`sw ${f.cls}`}>
-                {f.collections.length > 0 && (
-                  <img
-                    src="/sketches/weave.jpg"
-                    alt={`Структура материала: ${f.name}`}
-                    loading="lazy"
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none";
-                    }}
-                  />
-                )}
+                <img
+                  src="/sketches/weave.jpg"
+                  alt={`Структура материала: ${f.name}`}
+                  loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
               </span>
               <small>{f.name}</small>
               {f.collections.length > 0 && (
