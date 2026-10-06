@@ -457,7 +457,7 @@ function Home() {
           </p>
           <div className="hero-badges">
             <span>
-              <Icon name="check" size={16} /> Гарантия 2 года
+              <Icon name="check" size={16} /> Гарантия 1 года
             </span>
             <span>
               <Icon name="check" size={16} /> Бесплатный замер
