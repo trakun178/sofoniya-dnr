@@ -188,18 +188,18 @@ function LogoMark() {
 }
 
 /* ---------- Bitrix24 кнопка связи (FAB) ---------- */
+const B24_BTN =
+  '[class*="b24-widget-button"]:not([class*="wrapper"]):not([class*="panel"])';
+
 function findB24Button(): HTMLElement | null {
-  const sel =
-    '.b24-widget-button-openline_livechat span, .b24-widget-button, [class*="b24-widget-button"]';
   const search = (root: Document | ShadowRoot): HTMLElement | null => {
-    const direct = root.querySelector<HTMLElement>(sel);
-    if (direct) return direct;
-    const hosts = root.querySelectorAll("*");
-    for (const el of Array.from(hosts)) {
+    const btn = root.querySelector<HTMLElement>(B24_BTN);
+    if (btn) return btn;
+    for (const el of Array.from(root.querySelectorAll("*"))) {
       const sr = (el as Element & { shadowRoot?: ShadowRoot }).shadowRoot;
       if (sr) {
-        const inner = search(sr);
-        if (inner) return inner;
+        const r = search(sr);
+        if (r) return r;
       }
     }
     return null;
@@ -210,8 +210,12 @@ function findB24Button(): HTMLElement | null {
 function openBitrixChat() {
   const tryClick = (n: number) => {
     const el = findB24Button();
-    if (el) el.click();
-    else if (n > 0) setTimeout(() => tryClick(n - 1), 400);
+    if (el) {
+      const span = el.querySelector("span");
+      (span || el).click(); // обработчик виджета висит на span — кликаем по нему
+    } else if (n > 0) {
+      setTimeout(() => tryClick(n - 1), 400);
+    }
   };
   tryClick(5);
 }
@@ -231,7 +235,9 @@ function ContactFab() {
     const hideB24 = () => {
       const collect = (root: Document | ShadowRoot): Element[] => {
         let out: Element[] = Array.from(
-          root.querySelectorAll('[class*="b24-widget-button"]'),
+          root.querySelectorAll(
+            '[class*="b24-widget-button"]:not([class*="wrapper"]):not([class*="panel"])',
+          ),
         );
         root.querySelectorAll("*").forEach((el) => {
           const sr = (el as Element & { shadowRoot?: ShadowRoot }).shadowRoot;
@@ -249,7 +255,7 @@ function ContactFab() {
       });
     };
     hideB24();
-    const t = setInterval(hideB24, 1500); // виджет может перерисоваться — держим его кнопку скрытой
+    const t = setInterval(hideB24, 1500);
     return () => clearInterval(t);
   }, []);
 
