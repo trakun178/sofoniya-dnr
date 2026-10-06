@@ -2,11 +2,14 @@ import sharp from "sharp";
 import { readdir, stat } from "fs/promises";
 import { join } from "path";
 
-const ROOT = "public";
 const FORMATS = [".jpg", ".jpeg", ".png"];
 const QUALITY = 80;
 const MAX_WIDTH = 1600;
 const MIN_KB = 30;
+
+// аргументы: папки или файлы; без аргументов — весь public
+const args = process.argv.slice(2);
+const targets = args.length ? args : ["public"];
 
 async function walk(dir) {
   const entries = await readdir(dir, { withFileTypes: true });
@@ -19,12 +22,20 @@ async function walk(dir) {
   return out;
 }
 
-const files = (await walk(ROOT)).filter((f) =>
-  FORMATS.some((e) => f.toLowerCase().endsWith(e)),
-);
+const files = [];
+for (const t of targets) {
+  const s = await stat(t);
+  if (s.isFile()) files.push(t);
+  else
+    files.push(
+      ...(await walk(t)).filter((f) =>
+        FORMATS.some((e) => f.toLowerCase().endsWith(e)),
+      ),
+    );
+}
+
 let count = 0,
   savedTotal = 0;
-
 for (const f of files) {
   const orig = (await stat(f)).size;
   if (orig < MIN_KB * 1024) continue;
@@ -41,7 +52,7 @@ for (const f of files) {
           .toBuffer()
       : await pipe.jpeg({ quality: QUALITY, mozjpeg: true }).toBuffer();
     if (orig - buf.length > 0) {
-      await sharp(buf).toFile(f + ".opt"); // ← новый файл, оригинал не трогаем
+      await sharp(buf).toFile(f + ".opt");
       savedTotal += orig - buf.length;
       count++;
       console.log(

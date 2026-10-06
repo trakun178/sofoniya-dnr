@@ -302,11 +302,11 @@ button {
 }
 .ba-after {
   background-color: var(--navy);
-  background-image: url("/after.jpg");
+  background-image: url("/works/after.jpg");
 }
 .ba-before {
   background-color: #9aa0a6;
-  background-image: url("/before.jpg");
+  background-image: url("/works/before.jpg");
 }
 .ba-handle {
   position: absolute;
