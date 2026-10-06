@@ -481,8 +481,7 @@ function Home() {
         <div
           className="hero-photo"
           style={{
-            backgroundImage:
-              "url('https://images.unsplash.com/photo-1631396326646-c06a935ff3a6?w=900&h=900&fit=crop&auto=format')",
+            backgroundImage: "url('/works/hero.jpg')",
           }}
         />
       </section>
