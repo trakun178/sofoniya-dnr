@@ -211,8 +211,20 @@ function openBitrixChat() {
   const tryClick = (n: number) => {
     const el = findB24Button();
     if (el) {
-      const span = el.querySelector("span");
-      (span || el).click(); // обработчик виджета висит на span — кликаем по нему
+      const target = (el.querySelector("span") || el) as HTMLElement;
+      const r = target.getBoundingClientRect();
+      const opts = {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+        clientX: r.x + r.width / 2,
+        clientY: r.y + r.height / 2,
+      } as any;
+      target.dispatchEvent(new PointerEvent("pointerdown", opts));
+      target.dispatchEvent(new MouseEvent("mousedown", opts));
+      target.dispatchEvent(new PointerEvent("pointerup", opts));
+      target.dispatchEvent(new MouseEvent("mouseup", opts));
+      target.dispatchEvent(new MouseEvent("click", opts));
     } else if (n > 0) {
       setTimeout(() => tryClick(n - 1), 400);
     }
