@@ -188,28 +188,11 @@ function LogoMark() {
 }
 
 /* ---------- Bitrix24 кнопка связи (FAB) ---------- */
-const B24_BTN =
-  '[class*="b24-widget-button"]:not([class*="wrapper"]):not([class*="panel"])';
-
-function findB24Button(): HTMLElement | null {
-  const search = (root: Document | ShadowRoot): HTMLElement | null => {
-    const btn = root.querySelector<HTMLElement>(B24_BTN);
-    if (btn) return btn;
-    for (const el of Array.from(root.querySelectorAll("*"))) {
-      const sr = (el as Element & { shadowRoot?: ShadowRoot }).shadowRoot;
-      if (sr) {
-        const r = search(sr);
-        if (r) return r;
-      }
-    }
-    return null;
-  };
-  return search(document);
-}
+const B24_CHAT = ".b24-widget-button-openline_livechat";
 
 function openBitrixChat() {
   const tryClick = (n: number) => {
-    const el = findB24Button();
+    const el = document.querySelector<HTMLElement>(B24_CHAT);
     if (el) {
       const target = (el.querySelector("span") || el) as HTMLElement;
       const r = target.getBoundingClientRect();
@@ -226,10 +209,10 @@ function openBitrixChat() {
       target.dispatchEvent(new MouseEvent("mouseup", opts));
       target.dispatchEvent(new MouseEvent("click", opts));
     } else if (n > 0) {
-      setTimeout(() => tryClick(n - 1), 400);
+      setTimeout(() => tryClick(n - 1), 500);
     }
   };
-  tryClick(5);
+  tryClick(6);
 }
 
 /* ---------- Плавающая кнопка связи (FAB) ---------- */
@@ -242,34 +225,6 @@ function ContactFab() {
     const t = setInterval(() => setI((v) => (v + 1) % 4), 3000);
     return () => clearInterval(t);
   }, [open]);
-
-  useEffect(() => {
-    const hideB24 = () => {
-      const collect = (root: Document | ShadowRoot): Element[] => {
-        let out: Element[] = Array.from(
-          root.querySelectorAll(
-            '[class*="b24-widget-button"]:not([class*="wrapper"]):not([class*="panel"])',
-          ),
-        );
-        root.querySelectorAll("*").forEach((el) => {
-          const sr = (el as Element & { shadowRoot?: ShadowRoot }).shadowRoot;
-          if (sr) out = out.concat(collect(sr));
-        });
-        return out;
-      };
-      collect(document).forEach((el) => {
-        (el as HTMLElement).style.setProperty("opacity", "0", "important");
-        (el as HTMLElement).style.setProperty(
-          "pointer-events",
-          "none",
-          "important",
-        );
-      });
-    };
-    hideB24();
-    const t = setInterval(hideB24, 1500);
-    return () => clearInterval(t);
-  }, []);
 
   const svg = (d: React.ReactNode, size = 22) => (
     <svg
