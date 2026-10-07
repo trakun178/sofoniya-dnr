@@ -739,7 +739,7 @@ function Home() {
         </div>
       </footer>
 
-      <ContactFab />
+      {/* <ContactFab /> */}
       {modal && <LeadModal service={modal} onClose={() => setModal(null)} />}
     </div>
   );

@@ -1090,12 +1090,3 @@ button {
     position: static !important;
   }
 }
-/* Прячем дубль-кнопку Битрикс: круг, тень, каналы, тултип.
-   Wrapper и панель чата НЕ трогаем — окно останется видимым */
-.b24-widget-button-shadow,
-.b24-widget-button-button,
-.b24-widget-button-social-item,
-.b24-widget-button-popup {
-  opacity: 0 !important;
-  pointer-events: none !important;
-}
