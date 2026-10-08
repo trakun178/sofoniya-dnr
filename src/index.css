@@ -916,12 +916,18 @@ button {
 .cfab {
   position: fixed;
   right: 24px;
-  bottom: 24px;
+  bottom: 108px;
   z-index: 90;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
+}
+
+/* Кнопка Битрикс — точно под нашим FAB, в том же отступе справа */
+.b24-widget-button-wrapper {
+  right: 24px !important;
+  bottom: 24px !important;
 }
 .cfab-btn {
   width: 64px;

@@ -188,32 +188,6 @@ function LogoMark() {
 }
 
 /* ---------- Bitrix24 кнопка связи (FAB) ---------- */
-const B24_CHAT = ".b24-widget-button-openline_livechat";
-
-function openBitrixChat() {
-  const tryClick = (n: number) => {
-    const el = document.querySelector<HTMLElement>(B24_CHAT);
-    if (el) {
-      const target = (el.querySelector("span") || el) as HTMLElement;
-      const r = target.getBoundingClientRect();
-      const opts = {
-        bubbles: true,
-        cancelable: true,
-        view: window,
-        clientX: r.x + r.width / 2,
-        clientY: r.y + r.height / 2,
-      } as any;
-      target.dispatchEvent(new PointerEvent("pointerdown", opts));
-      target.dispatchEvent(new MouseEvent("mousedown", opts));
-      target.dispatchEvent(new PointerEvent("pointerup", opts));
-      target.dispatchEvent(new MouseEvent("mouseup", opts));
-      target.dispatchEvent(new MouseEvent("click", opts));
-    } else if (n > 0) {
-      setTimeout(() => tryClick(n - 1), 500);
-    }
-  };
-  tryClick(6);
-}
 
 /* ---------- Плавающая кнопка связи (FAB) ---------- */
 function ContactFab() {
@@ -241,51 +215,30 @@ function ContactFab() {
     </svg>
   );
 
+  const phonePath = (
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" />
+  );
+  const tgPath = <path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" />;
+
   const main = [
-    {
-      title: "Telegram",
-      bg: "#0088CC",
-      icon: svg(<path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" />),
-    },
+    { title: "Telegram", bg: "#0088CC", icon: svg(tgPath) },
     {
       title: "MAX",
       bg: "#7A5AF8",
       icon: <span style={{ fontWeight: 800, fontSize: 13 }}>MAX</span>,
     },
     {
-      title: "Чат на сайте",
-      bg: "#27AE60",
-      icon: svg(
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />,
-      ),
+      title: "ВКонтакте",
+      bg: "#4A76A8",
+      icon: <span style={{ fontWeight: 800, fontSize: 12 }}>VK</span>,
     },
-    {
-      title: "Позвонить",
-      bg: "#FF6B00",
-      icon: svg(
-        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" />,
-      ),
-    },
+    { title: "Позвонить", bg: "#FF6B00", icon: svg(phonePath) },
   ];
   const s = main[i];
 
   return (
     <div className={`cfab ${open ? "cfab-open" : ""}`}>
       <div className="cfab-menu">
-        <button
-          className="cfab-item"
-          style={{ background: "#27AE60" }}
-          title="Чат на сайте"
-          onClick={() => {
-            setOpen(false);
-            openBitrixChat();
-          }}
-        >
-          {svg(
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />,
-            18,
-          )}
-        </button>
         <a
           className="cfab-item"
           style={{ background: "#4A76A8" }}
@@ -304,7 +257,7 @@ function ContactFab() {
           target="_blank"
           rel="noreferrer"
         >
-          {svg(<path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" />, 18)}
+          {svg(tgPath, 18)}
         </a>
         <a
           className="cfab-item"
@@ -322,10 +275,7 @@ function ContactFab() {
           title="+7 949 098-35-32"
           href="tel:+79490983532"
         >
-          {svg(
-            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" />,
-            18,
-          )}
+          {svg(phonePath, 18)}
         </a>
       </div>
       <button
@@ -739,7 +689,7 @@ function Home() {
         </div>
       </footer>
 
-      {/* <ContactFab /> */}
+      <ContactFab />
       {modal && <LeadModal service={modal} onClose={() => setModal(null)} />}
     </div>
   );
