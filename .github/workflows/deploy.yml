@@ -1,11 +1,18 @@
-name: Deploy to GitHub Pages
+name: Deploy
+
 on:
   push:
     branches: [main]
+
 permissions:
   contents: read
   pages: write
   id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -14,12 +21,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm install
-      - run: npm run build
-      - uses: actions/configure-pages@v4
+      - name: Build
+        run: npm install --no-audit --no-fund && npm run build
+        env:
+          VITE_TG_BOT_TOKEN: ${{ secrets.VITE_TG_BOT_TOKEN }}
+          VITE_TG_CHAT_ID: ${{ secrets.VITE_TG_CHAT_ID }}
+      - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
@@ -29,8 +40,3 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
-      - name: Build
-        run: npm ci && npm run build
-        env:
-          VITE_TG_BOT_TOKEN: ${{ secrets.VITE_TG_BOT_TOKEN }}
-          VITE_TG_CHAT_ID: ${{ secrets.VITE_TG_CHAT_ID }}

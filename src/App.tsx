@@ -34,9 +34,22 @@ async function sendToTelegram(data: {
   if (!r.ok) throw new Error("TG send failed");
 }
 
+async function sendPhotosToTelegram(files: File[], caption: string) {
+  for (const f of files) {
+    const fd = new FormData();
+    fd.append("chat_id", TG_CHAT_ID);
+    fd.append("caption", caption);
+    fd.append("photo", f);
+    await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendPhoto`, {
+      method: "POST",
+      body: fd,
+    });
+  }
+}
+
 // ────────────────────────────────────────────────────────────
-// КАЛЬКУЛЯТОР: честная формула "работа = 1000 ₽ за метр"
-// Цифры ниже — проверь и правь под свою экономику.
+// КАЛЬКУЛЯТОР: честная формула «работа = 1000 ₽ за метр»
+// Цифры ниже — твоя экономика, правь смело.
 // ────────────────────────────────────────────────────────────
 
 const CALC = {
@@ -192,7 +205,7 @@ function MiniFooter() {
 }
 
 // ────────────────────────────────────────────────────────────
-// LEAD-МОДАЛКА
+// LEAD-МОДАЛКА (фото + антиспам)
 // ────────────────────────────────────────────────────────────
 
 function LeadModal({
@@ -205,15 +218,28 @@ function LeadModal({
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [comment, setComment] = useState("");
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [hp, setHp] = useState("");
+  const openedAt = useRef(Date.now());
   const [state, setState] = useState<"idle" | "sending" | "done" | "error">(
     "idle",
   );
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (hp.trim() !== "" || Date.now() - openedAt.current < 4000) {
+      setState("done"); // бот верит в успех, заявка не уходит
+      return;
+    }
     setState("sending");
     try {
       await sendToTelegram({ name, phone, comment, service });
+      if (photos.length) {
+        await sendPhotosToTelegram(
+          photos,
+          `📎 Фото к заявке: ${service}, ${phone}`,
+        ).catch(() => {});
+      }
       setState("done");
     } catch {
       setState("error");
@@ -259,6 +285,28 @@ function LeadModal({
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="Опишите мебель (необязательно)"
               />
+              <label className="lm-file">
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  hidden
+                  onChange={(e) =>
+                    setPhotos(Array.from(e.target.files || []).slice(0, 3))
+                  }
+                />
+                {photos.length
+                  ? `📎 Фото прикреплено: ${photos.length}`
+                  : "📎 Прикрепить фото мебели (до 3 шт)"}
+              </label>
+              <input
+                className="lm-hp"
+                tabIndex={-1}
+                autoComplete="off"
+                value={hp}
+                onChange={(e) => setHp(e.target.value)}
+                placeholder="Не заполняйте это поле"
+              />
               <button
                 className="btn btn-primary lm-submit"
                 type="submit"
@@ -292,7 +340,7 @@ function LeadModal({
 }
 
 // ────────────────────────────────────────────────────────────
-// КАЛЬКУЛЯТОР
+// КАЛЬКУЛЯТОР (фото + антиспам)
 // ────────────────────────────────────────────────────────────
 
 function Calculator() {
@@ -307,6 +355,9 @@ function Calculator() {
   const [matId, setMatId] = useState("std");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [hp, setHp] = useState("");
+  const openedAt = useRef(Date.now());
   const [sent, setSent] = useState(false);
 
   const type = CALC.types.find((t) => t.id === typeId)!;
@@ -335,6 +386,10 @@ function Calculator() {
     `ремонт: ${reps.map((i) => CALC.repairs.find((r) => r.id === i)!.name).join(", ") || "—"}; материал: ${mat.name}; расход ≈ ${meters} м`;
 
   const send = async () => {
+    if (hp.trim() !== "" || Date.now() - openedAt.current < 4000) {
+      setSent(true);
+      return;
+    }
     try {
       await sendToTelegram({
         name,
@@ -342,6 +397,12 @@ function Calculator() {
         comment: summary + `; итог ≈ ${total.toLocaleString("ru-RU")} ₽`,
         service: "Калькулятор: " + type.name,
       });
+      if (photos.length) {
+        await sendPhotosToTelegram(
+          photos,
+          `📎 Фото к расчёту: ${type.name}, ${phone}`,
+        ).catch(() => {});
+      }
       setSent(true);
     } catch {
       setSent(false);
@@ -483,6 +544,28 @@ function Calculator() {
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
         />
+        <label className="lm-file">
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            hidden
+            onChange={(e) =>
+              setPhotos(Array.from(e.target.files || []).slice(0, 3))
+            }
+          />
+          {photos.length
+            ? `📎 Фото прикреплено: ${photos.length}`
+            : "📎 Прикрепить фото мебели (до 3 шт)"}
+        </label>
+        <input
+          className="lm-hp"
+          tabIndex={-1}
+          autoComplete="off"
+          value={hp}
+          onChange={(e) => setHp(e.target.value)}
+          placeholder="Не заполняйте это поле"
+        />
         <button
           className="btn btn-primary"
           onClick={send}
@@ -605,6 +688,12 @@ function ContactFab() {
 
 function Home() {
   const [modal, setModal] = useState<string | null>(null);
+  const [navOpen, setNavOpen] = useState(false);
+
+  const go = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    setNavOpen(false);
+  };
 
   const SERVICES = [
     { name: "Перетяжка дивана", desc: "Прямые, угловые, модульные" },
@@ -617,6 +706,48 @@ function Home() {
 
   return (
     <>
+      {/* ШАПКА */}
+      <header className="header">
+        <Link to="/" className="logo">
+          <span>SOFONIYA</span>
+          <small>реставрация мебели</small>
+        </Link>
+        <nav className={`nav ${navOpen ? "show" : ""}`}>
+          <button className="nav-link" onClick={() => go("services")}>
+            Услуги
+          </button>
+          <button className="nav-link" onClick={() => go("fabrics")}>
+            Ткани
+          </button>
+          <button className="nav-link" onClick={() => go("calc")}>
+            Калькулятор
+          </button>
+          <button className="nav-link" onClick={() => go("works")}>
+            Работы
+          </button>
+          <button className="nav-link" onClick={() => go("contacts")}>
+            Контакты
+          </button>
+        </nav>
+        <div className="header-cta">
+          <a
+            className="btn btn-ghost"
+            href="https://t.me/dnr_peretyajka_mebeli"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Telegram
+          </a>
+          <button
+            className="burger"
+            onClick={() => setNavOpen((o) => !o)}
+            aria-label="Меню"
+          >
+            ☰
+          </button>
+        </div>
+      </header>
+
       {/* HERO */}
       <section className="hero">
         <img
@@ -665,7 +796,7 @@ function Home() {
         </div>
       </section>
 
-      {/* ТКАНИ: кружки с чернильным скетчем weave */}
+      {/* ТКАНИ */}
       <section className="section" id="fabrics">
         <h2 className="section-title">Выберите идеальную ткань</h2>
         <p className="section-sub">
@@ -713,23 +844,8 @@ function Home() {
         className="section"
         style={{ background: "#fff" }}
       >
-        <h2
-          style={{
-            textAlign: "center",
-            fontSize: "clamp(26px, 3.4vw, 38px)",
-            marginBottom: 12,
-          }}
-        >
-          Витрина коллекций
-        </h2>
-        <p
-          style={{
-            textAlign: "center",
-            color: "#8D99AE",
-            maxWidth: 760,
-            margin: "0 auto 40px",
-          }}
-        >
+        <h2 className="section-title">Витрина коллекций</h2>
+        <p className="section-sub">
           По одной представительной коллекции от каждого типа материала. Нажмите
           на кружок выше, чтобы открыть все коллекции типа.
         </p>
@@ -755,23 +871,8 @@ function Home() {
 
       {/* КАЛЬКУЛЯТОР */}
       <section id="calc" className="section" style={{ background: "#F7F6F3" }}>
-        <h2
-          style={{
-            textAlign: "center",
-            fontSize: "clamp(26px, 3.4vw, 38px)",
-            marginBottom: 12,
-          }}
-        >
-          Рассчитайте стоимость за минуту
-        </h2>
-        <p
-          style={{
-            textAlign: "center",
-            color: "#8D99AE",
-            maxWidth: 720,
-            margin: "0 auto 32px",
-          }}
-        >
+        <h2 className="section-title">Рассчитайте стоимость за минуту</h2>
+        <p className="section-sub">
           Честная формула: работа считается по расходу ткани, материал — по
           категории. Без скрытых «+» в конце.
         </p>
@@ -795,24 +896,8 @@ function Home() {
 
       {/* ПРОЦЕСС */}
       <section id="process" className="section" style={{ background: "#fff" }}>
-        <h2
-          style={{
-            textAlign: "center",
-            fontSize: "clamp(26px, 3.4vw, 38px)",
-            marginBottom: 40,
-          }}
-        >
-          Как мы работаем
-        </h2>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: 20,
-            maxWidth: 1100,
-            margin: "0 auto",
-          }}
-        >
+        <h2 className="section-title">Как мы работаем</h2>
+        <div className="process-grid">
           {[
             {
               n: "01",
@@ -845,22 +930,10 @@ function Home() {
               d: "Привозим обратно и выдаём гарантию",
             },
           ].map((s) => (
-            <div
-              key={s.n}
-              style={{
-                padding: 24,
-                border: "1px solid #e5e2da",
-                borderRadius: 14,
-                background: "#F7F6F3",
-              }}
-            >
-              <div style={{ color: "#FF6B00", fontWeight: 800, fontSize: 14 }}>
-                {s.n}
-              </div>
-              <h3 style={{ margin: "8px 0", color: "#1A1A2E", fontSize: 18 }}>
-                {s.t}
-              </h3>
-              <p style={{ color: "#55596a", fontSize: 14, margin: 0 }}>{s.d}</p>
+            <div className="process-card" key={s.n}>
+              <div className="process-num">{s.n}</div>
+              <h3>{s.t}</h3>
+              <p>{s.d}</p>
             </div>
           ))}
         </div>
@@ -869,7 +942,7 @@ function Home() {
       {/* FAQ */}
       <section className="section" id="faq">
         <h2 className="section-title">Частые вопросы</h2>
-        <div style={{ maxWidth: 800, margin: "0 auto" }}>
+        <div className="faq-list">
           {[
             {
               q: "Сколько стоит перетяжка?",
@@ -892,73 +965,44 @@ function Home() {
               a: "Да, организуем вывоз на производство и доставку обратно.",
             },
           ].map((f, i) => (
-            <details
-              key={i}
-              style={{ borderBottom: "1px solid #e5e2da", padding: "16px 0" }}
-            >
-              <summary
-                style={{ cursor: "pointer", fontWeight: 700, color: "#1A1A2E" }}
-              >
-                {f.q}
-              </summary>
-              <p style={{ color: "#55596a", marginTop: 12 }}>{f.a}</p>
+            <details className="faq-item" key={i}>
+              <summary>{f.q}</summary>
+              <p>{f.a}</p>
             </details>
           ))}
         </div>
       </section>
 
       {/* КОНТАКТЫ */}
-      <section
-        className="section"
-        id="contacts"
-        style={{ background: "#1A1A2E", color: "#fff" }}
-      >
-        <h2
-          style={{
-            textAlign: "center",
-            fontSize: "clamp(26px, 3.4vw, 38px)",
-            marginBottom: 24,
-          }}
-        >
+      <section className="section contacts" id="contacts">
+        <h2 className="section-title" style={{ color: "#fff" }}>
           Связаться с нами
         </h2>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-            gap: 24,
-            maxWidth: 900,
-            margin: "0 auto",
-            textAlign: "center",
-          }}
-        >
+        <div className="contacts-grid">
           <div>
-            <div style={{ color: "#FF6B00", fontWeight: 800 }}>Телефон</div>
-            <a
-              href="tel:+79490983532"
-              style={{ color: "#fff", fontSize: 20, textDecoration: "none" }}
-            >
+            <div className="contacts-label">Телефон</div>
+            <a href="tel:+79490983532" className="contacts-value">
               +7 949 098-35-32
             </a>
           </div>
           <div>
-            <div style={{ color: "#FF6B00", fontWeight: 800 }}>Telegram</div>
+            <div className="contacts-label">Telegram</div>
             <a
               href="https://t.me/dnr_peretyajka_mebeli"
               target="_blank"
               rel="noreferrer"
-              style={{ color: "#fff", textDecoration: "none" }}
+              className="contacts-value"
             >
               @dnr_peretyajka_mebeli
             </a>
           </div>
           <div>
-            <div style={{ color: "#FF6B00", fontWeight: 800 }}>Соцсети</div>
+            <div className="contacts-label">Соцсети</div>
             <a
               href="https://vk.ru/dnr_peretyajka_mebeli"
               target="_blank"
               rel="noreferrer"
-              style={{ color: "#fff", textDecoration: "none" }}
+              className="contacts-value"
             >
               ВКонтакте
             </a>
