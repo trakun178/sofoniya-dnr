@@ -4,11 +4,19 @@ import { CATALOG, coverOf, shadeOf } from "./data/catalog";
 import type { FabricType, Collection } from "./data/catalog";
 
 // ────────────────────────────────────────────────────────────
-// КОНСТАНТЫ И ХЕЛПЕРЫ
+// КОНСТАНТЫ
 // ────────────────────────────────────────────────────────────
 
 const TG_BOT_TOKEN = import.meta.env.VITE_TG_BOT_TOKEN as string;
 const TG_CHAT_ID = import.meta.env.VITE_TG_CHAT_ID as string;
+
+const LEGAL = {
+  name: "ИП Тракун Д.М.",
+  ogrnip: "325930100020396",
+  inn: "101102624468",
+  address: "ДНР, г. Донецк — адрес производства уточняется по телефону",
+  mapSrc: "https://yandex.ru/map-widget/v1/?ll=37.804662%2C48.007367&z=12",
+};
 
 const PHONE_PATH = (
   <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" />
@@ -70,17 +78,17 @@ async function sendPhotosToTelegram(files: File[], caption: string) {
 }
 
 // ────────────────────────────────────────────────────────────
-// ЭКОНОМИКА КАЛЬКУЛЯТОРА (правка под себя — только цифры)
+// ЭКОНОМИКА: работа фикс за тип + 1000 ₽/м за дополнения
 // ────────────────────────────────────────────────────────────
 
 const CALC = {
   laborPerM: 1000,
   types: [
-    { id: "straight", name: "Прямой диван", baseM: 9 },
-    { id: "corner", name: "Угловой диван", baseM: 13 },
-    { id: "armchair", name: "Кресло", baseM: 7 },
-    { id: "chair", name: "Стул", baseM: 3 },
-    { id: "kitchen", name: "Кухонный уголок", baseM: 10 },
+    { id: "straight", name: "Прямой диван", baseM: 9, work: 25000 },
+    { id: "corner", name: "Угловой диван", baseM: 13, work: 45000 },
+    { id: "armchair", name: "Кресло", baseM: 7, work: 15000 },
+    { id: "chair", name: "Стул", baseM: 3, work: 3000 },
+    { id: "kitchen", name: "Кухонный уголок", baseM: 10, work: 20000 },
   ],
   mechanisms: [
     { id: "none", name: "Без механизма", m: 0 },
@@ -219,7 +227,8 @@ function MiniHeader() {
 function MiniFooter() {
   return (
     <footer className="mini-footer">
-      © {new Date().getFullYear()} SOFONIYA · Перетяжка мебели в ДНР
+      © {new Date().getFullYear()} SOFONIYA · {LEGAL.name} · ОГРНИП{" "}
+      {LEGAL.ogrnip}
     </footer>
   );
 }
@@ -379,7 +388,7 @@ function LeadModal({
 }
 
 // ────────────────────────────────────────────────────────────
-// КАЛЬКУЛЯТОР-MASTER: пошаговый wizard с живым итогом
+// КАЛЬКУЛЯТОР-WIZARD
 // ────────────────────────────────────────────────────────────
 
 function Calculator() {
@@ -405,15 +414,19 @@ function Calculator() {
   const mat = CALC.materials.find((m) => m.id === matId)!;
 
   const scale = typeId === "chair" ? 1 : width / 2000;
-  const raw = type.baseM * scale + mech.m + (back + seat) * CALC.cushionM;
+  const baseMeters = type.baseM * scale;
+  const raw = baseMeters + mech.m + (back + seat) * CALC.cushionM;
   const meters = Math.round(raw * (tuft ? CALC.tuftMult : 1) * 10) / 10;
+  const extraM = Math.max(0, meters - baseMeters);
   const finSum = CALC.finishes
     .filter((f) => fins.includes(f.id))
     .reduce((s, f) => s + f.price, 0);
   const repSum = CALC.repairs
     .filter((r) => reps.includes(r.id))
     .reduce((s, r) => s + r.price, 0);
-  const labor = Math.round(meters * CALC.laborPerM + finSum + repSum);
+  const labor = Math.round(
+    type.work + extraM * CALC.laborPerM + finSum + repSum,
+  );
   const material = Math.round(meters * mat.rate);
   const total = labor + material;
 
@@ -654,7 +667,7 @@ function Calculator() {
 }
 
 // ────────────────────────────────────────────────────────────
-// FAB: MAX первым (акцент), TG, VK, телефон
+// FAB (MAX первым)
 // ────────────────────────────────────────────────────────────
 
 function ContactFab() {
@@ -738,7 +751,7 @@ function ContactFab() {
 }
 
 // ────────────────────────────────────────────────────────────
-// ГЛАВНАЯ
+// ГЛАВНАЯ — «Ателье-атлас»
 // ────────────────────────────────────────────────────────────
 
 function Home() {
@@ -751,12 +764,46 @@ function Home() {
   };
 
   const SERVICES = [
-    { name: "Перетяжка дивана", desc: "Прямые, угловые, модульные" },
-    { name: "Перетяжка кресла", desc: "Вольтеровские, офисные, каминные" },
-    { name: "Стулья и банкетки", desc: "Обеденные группы комплектом" },
-    { name: "Изголовья и панели", desc: "Мягкие стеновые панели" },
-    { name: "Каретная стяжка", desc: "Капитоне, пуговицы, кант" },
-    { name: "Ремонт мебели", desc: "Каркас, механизм, пружины" },
+    {
+      name: "Перетяжка дивана",
+      desc: "Прямые, угловые, модульные",
+      price: "от 25 000 ₽",
+    },
+    {
+      name: "Угловой диван",
+      desc: "С сопряжением секций и кантом",
+      price: "от 45 000 ₽",
+    },
+    {
+      name: "Перетяжка кресла",
+      desc: "Вольтеровские, офисные, каминные",
+      price: "от 15 000 ₽",
+    },
+    {
+      name: "Стулья и банкетки",
+      desc: "Обеденные группы комплектом",
+      price: "от 3 000 ₽",
+    },
+    {
+      name: "Каретная стяжка",
+      desc: "Капитоне, пуговицы, кант",
+      price: "оценка по фото",
+    },
+    {
+      name: "Ремонт мебели",
+      desc: "Каркас, механизм, пружины",
+      price: "от 3 000 ₽",
+    },
+  ];
+
+  const MARQUEE = [
+    "Перетяжка диванов",
+    "Кресла и стулья",
+    "Каретная стяжка",
+    "Ремонт каркаса",
+    "Бесплатный замер",
+    "Гарантия 2 года",
+    "Донецк · Макеевка · ДНР",
   ];
 
   return (
@@ -811,18 +858,18 @@ function Home() {
         </div>
       </header>
 
-      {/* HERO: текст слева, фото справа */}
+      {/* HERO */}
       <section className="hero">
-        <div className="hero-inner">
-          <span className="hero-tag">ДНР · Донецк · Макеевка</span>
+        <div className="hero-left">
+          <span className="overline">ДНР · Донецк · Макеевка</span>
           <h1>
-            Ваш диван станет <span className="accent">лучше нового</span>
+            Ваш диван станет <em>лучше нового</em>
           </h1>
-          <p>
-            Собственное производство. Фиксированная цена в договоре. Гарантия на
-            работы.
+          <p className="hero-lead">
+            Ателье перетяжки с собственным цехом. Фиксированная цена в договоре,
+            фабричный наполнитель, гарантия 2 года.
           </p>
-          <div className="hero-actions">
+          <div className="hero-btns">
             <button
               className="btn btn-primary"
               onClick={() => setModal("Рассчитать стоимость")}
@@ -833,60 +880,78 @@ function Home() {
               {svgIcon(PHONE_PATH, 18)} Позвонить
             </a>
           </div>
-          <p className="hero-mess">
-            Быстрее в мессенджерах:{" "}
-            <a
-              href="https://max.ru/channel_peretyajka"
-              target="_blank"
-              rel="noreferrer"
-            >
-              <b>MAX</b>
-            </a>{" "}
-            ·{" "}
-            <a
-              href="https://t.me/dnr_peretyajka_mebeli"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Telegram
-            </a>
-          </p>
+          <div className="stamps">
+            <span className="stamp">
+              <b>7</b> дней срок
+            </span>
+            <span className="stamp">
+              <b>2</b> года гарантия
+            </span>
+            <span className="stamp">
+              <b>0 ₽</b> вывоз и доставка
+            </span>
+          </div>
         </div>
-        <img
-          className="hero-img"
-          src="/works/hero.jpg"
-          alt="Мастер за работой"
-        />
+        <div className="hero-art">
+          <img
+            className="hero-photo"
+            src="/works/hero.jpg"
+            alt="Мастер за работой"
+          />
+          <span className="hero-dot d1">
+            <img src="/sketches/natural-leather.jpg" alt="Зерно кожи" />
+          </span>
+          <span className="hero-dot d2">
+            <img src="/sketches/velour.jpg" alt="Структура велюра" />
+          </span>
+        </div>
       </section>
+
+      {/* МАРОКИЗА */}
+      <div className="marquee" aria-hidden="true">
+        <div className="marquee-track">
+          {[...MARQUEE, ...MARQUEE].map((m, i) => (
+            <span key={i}>{m} ✦</span>
+          ))}
+        </div>
+      </div>
 
       {/* УСЛУГИ */}
       <section className="section" id="services">
-        <h2 className="section-title">Что мы перетягиваем</h2>
-        <div className="services-grid">
-          {SERVICES.map((s) => (
-            <div
-              className="svc-card"
+        <div className="section-head">
+          <span className="overline">01 · Услуги</span>
+          <h2>Что мы перетягиваем</h2>
+        </div>
+        <div className="rows">
+          {SERVICES.map((s, i) => (
+            <button
+              className="row"
               key={s.name}
               onClick={() => setModal(s.name)}
             >
-              <h3>{s.name}</h3>
-              <p>{s.desc}</p>
-              <span className="svc-more">Узнать стоимость →</span>
-            </div>
+              <span className="row-num">{String(i + 1).padStart(2, "0")}</span>
+              <span className="row-title">{s.name}</span>
+              <span className="row-desc">{s.desc}</span>
+              <span className="row-price">{s.price}</span>
+              <span className="row-arrow">→</span>
+            </button>
           ))}
         </div>
       </section>
 
       {/* ТКАНИ */}
       <section className="section" id="fabrics">
-        <h2 className="section-title">Выберите идеальную ткань</h2>
-        <p className="section-sub">
-          10 типов материалов. Нажмите на круг — покажем все коллекции этого
-          типа.
-        </p>
-        <div className="swatches">
+        <div className="section-head">
+          <span className="overline">02 · Материалы</span>
+          <h2>Атлас тканей</h2>
+          <p className="section-sub">
+            Структура каждого материала — под увеличением. Нажмите на круг,
+            чтобы открыть коллекции.
+          </p>
+        </div>
+        <div className="scroll-row">
           {CATALOG.map((f) => (
-            <Link to={`/t/${f.id}`} className="swatch" key={f.id}>
+            <Link to={`/t/${f.id}`} className="scroll-item" key={f.id}>
               <span className={`sw ${f.cls}`}>
                 <img
                   src="/sketches/weave.jpg"
@@ -907,29 +972,18 @@ function Home() {
             </Link>
           ))}
         </div>
-        <div style={{ textAlign: "center", marginTop: 24 }}>
-          <a
-            className="btn btn-primary"
-            href="https://max.ru/channel_peretyajka"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Привезти образцы бесплатно
-          </a>
-        </div>
+        <p className="scroll-hint">→ листайте вбок</p>
       </section>
 
-      {/* ВИТРИНА КОЛЛЕКЦИЙ */}
-      <section
-        id="collections"
-        className="section"
-        style={{ background: "#fff" }}
-      >
-        <h2 className="section-title">Витрина коллекций</h2>
-        <p className="section-sub">
-          По одной представительной коллекции от каждого типа материала. Нажмите
-          на кружок выше, чтобы открыть все коллекции типа.
-        </p>
+      {/* ВИТРИНА */}
+      <section className="section" id="collections">
+        <div className="section-head">
+          <span className="overline">03 · Коллекции</span>
+          <h2>Витрина коллекций</h2>
+          <p className="section-sub">
+            По одной представительной коллекции от каждого типа материала.
+          </p>
+        </div>
         <div className="showcase">
           {CATALOG.filter((t) => t.collections.length > 0).map((t) => {
             const c = t.collections[0];
@@ -951,22 +1005,28 @@ function Home() {
       </section>
 
       {/* КАЛЬКУЛЯТОР */}
-      <section id="calc" className="section">
-        <h2 className="section-title">Рассчитайте стоимость за минуту</h2>
-        <p className="section-sub">
-          Семь шагов — и вы видите честную формулу: работа по расходу ткани,
-          материал по категории.
-        </p>
+      <section className="section" id="calc">
+        <div className="section-head">
+          <span className="overline">04 · Калькулятор</span>
+          <h2>Стоимость за минуту</h2>
+          <p className="section-sub">
+            Работа — фикс за тип мебели, дополнения — по честному расходу ткани.
+            Материал — по категории.
+          </p>
+        </div>
         <Calculator />
       </section>
 
       {/* ДО / ПОСЛЕ */}
-      <section className="section" id="works" style={{ background: "#fff" }}>
-        <h2 className="section-title">До и после</h2>
-        <p className="section-sub">
-          Потяните ползунок или просто наблюдайте — он дышит сам.
-        </p>
-        <div style={{ maxWidth: 900, margin: "0 auto" }}>
+      <section className="section" id="works">
+        <div className="section-head">
+          <span className="overline">05 · Работы</span>
+          <h2>До и после</h2>
+          <p className="section-sub">
+            Потяните ползунок или наблюдайте — он дышит сам.
+          </p>
+        </div>
+        <div className="aba-frame">
           <AutoBeforeAfter
             before="/works/before.jpg"
             after="/works/after.jpg"
@@ -976,8 +1036,11 @@ function Home() {
       </section>
 
       {/* ПРОЦЕСС */}
-      <section id="process" className="section">
-        <h2 className="section-title">Как мы работаем</h2>
+      <section className="section" id="process">
+        <div className="section-head">
+          <span className="overline">06 · Процесс</span>
+          <h2>Как мы работаем</h2>
+        </div>
         <div className="process-grid">
           {[
             {
@@ -1021,36 +1084,44 @@ function Home() {
       </section>
 
       {/* FAQ */}
-      <section className="section" id="faq" style={{ background: "#fff" }}>
-        <h2 className="section-title">Частые вопросы</h2>
-        <div className="faq-list">
-          {[
-            {
-              q: "Сколько стоит перетяжка?",
-              a: "Стул от 3 000 ₽, кресло от 15 000 ₽, диван от 25 000 ₽. Точную цену назовём по фото или замере.",
-            },
-            {
-              q: "Можно ли своей тканью?",
-              a: "Да, тогда платите только за работу. Образцы можно привезти свои или выбрать из наших.",
-            },
-            {
-              q: "Сколько времени занимает?",
-              a: "Обычно 7–14 дней. С каретной стяжкой и нестандартной геометрией — дольше.",
-            },
-            {
-              q: "Даёте гарантию?",
-              a: "Да, гарантия на работы прописывается в договоре.",
-            },
-            {
-              q: "Забираете и привозите мебель?",
-              a: "Да, организуем вывоз на производство и доставку обратно.",
-            },
-          ].map((f, i) => (
-            <details className="faq-item" key={i}>
-              <summary>{f.q}</summary>
-              <p>{f.a}</p>
-            </details>
-          ))}
+      <section className="section" id="faq">
+        <div className="faq-wrap">
+          <div className="faq-left">
+            <span className="overline">07 · Вопросы</span>
+            <h2>Частые вопросы</h2>
+            <p className="section-sub" style={{ textAlign: "left", margin: 0 }}>
+              Не нашли ответ — напишите в MAX, ответим за 15 минут.
+            </p>
+          </div>
+          <div className="faq-list">
+            {[
+              {
+                q: "Сколько стоит перетяжка?",
+                a: "Стул от 3 000 ₽, кресло от 15 000 ₽, диван от 25 000 ₽, угловой диван от 45 000 ₽. Точную цену назовём по фото или замере.",
+              },
+              {
+                q: "Можно ли своей тканью?",
+                a: "Да, тогда платите только за работу. Образцы можно привезти свои или выбрать из наших.",
+              },
+              {
+                q: "Сколько времени занимает?",
+                a: "Обычно 7–14 дней. С каретной стяжкой и нестандартной геометрией — дольше.",
+              },
+              {
+                q: "Даёте гарантию?",
+                a: "Да, 2 года. Гарантия на работы прописывается в договоре.",
+              },
+              {
+                q: "Забираете и привозите мебель?",
+                a: "Да, вывоз и доставка обратно — бесплатно по Донецку и Макеевке.",
+              },
+            ].map((f, i) => (
+              <details className="faq-item" key={i}>
+                <summary>{f.q}</summary>
+                <p>{f.a}</p>
+              </details>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -1111,16 +1182,23 @@ function Home() {
               Звоните 9:00–19:00 или пишите в мессенджеры — ответим за 15 минут.
             </p>
           </div>
+          <div>
+            <h4>Реквизиты</h4>
+            <p className="footer-legal">{LEGAL.name}</p>
+            <p className="footer-legal">ОГРНИП {LEGAL.ogrnip}</p>
+            <p className="footer-legal">ИНН {LEGAL.inn}</p>
+            <p className="footer-legal">{LEGAL.address}</p>
+          </div>
+        </div>
+        <div className="footer-map">
+          <iframe title="SOFONIYA на карте" src={LEGAL.mapSrc} loading="lazy" />
         </div>
         <div className="footer-bottom">
           © {new Date().getFullYear()} SOFONIYA · Перетяжка мебели в ДНР
         </div>
       </footer>
 
-      {/* FAB */}
       <ContactFab />
-
-      {/* МОДАЛКА */}
       {modal && <LeadModal service={modal} onClose={() => setModal(null)} />}
     </>
   );
@@ -1138,6 +1216,7 @@ function TypePage() {
     <div>
       <MiniHeader />
       <section className="section">
+        <span className="overline">Материал</span>
         <h1 className="page-title">{t.name}</h1>
         {t.collections.length === 0 ? (
           <p className="empty-note">
