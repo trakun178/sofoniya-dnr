@@ -10,6 +10,9 @@ import type { FabricType, Collection } from "./data/catalog";
 const TG_BOT_TOKEN = import.meta.env.VITE_TG_BOT_TOKEN as string;
 const TG_CHAT_ID = import.meta.env.VITE_TG_CHAT_ID as string;
 
+// Впиши свою почту: на неё придёт письмо-активация FormSubmit при ПЕРВОЙ заявке — кликни ссылку один раз
+const EMAIL_TO = "ВСТАВЬ_СВОЮ_ПОЧТУ";
+
 const LEGAL = {
   name: "ИП Тракун Д.М.",
   ogrnip: "325930100020396",
@@ -64,6 +67,39 @@ async function sendToTelegram(data: {
   if (!r.ok) throw new Error("TG send failed");
 }
 
+async function sendEmailFallback(data: {
+  name: string;
+  phone: string;
+  comment: string;
+  service: string;
+}) {
+  if (EMAIL_TO.includes("ВСТАВЬ")) throw new Error("email not configured");
+  const r = await fetch(`https://formsubmit.co/ajax/${EMAIL_TO}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      _subject: `Заявка SOFONIYA: ${data.service}`,
+      Имя: data.name || "—",
+      Телефон: data.phone,
+      Комментарий: data.comment || "—",
+    }),
+  });
+  if (!r.ok) throw new Error("email send failed");
+}
+
+async function sendLead(data: {
+  name: string;
+  phone: string;
+  comment: string;
+  service: string;
+}) {
+  try {
+    await sendToTelegram(data);
+  } catch {
+    await sendEmailFallback(data); // TG недоступен в ДНР — уходит на почту
+  }
+}
+
 async function sendPhotosToTelegram(files: File[], caption: string) {
   for (const f of files) {
     const fd = new FormData();
@@ -78,7 +114,7 @@ async function sendPhotosToTelegram(files: File[], caption: string) {
 }
 
 // ────────────────────────────────────────────────────────────
-// ЭКОНОМИКА: работа фикс за тип + 1000 ₽/м за дополнения
+// ЭКОНОМИКА: работа фикс за тип (цены владельца), материал по категориям
 // ────────────────────────────────────────────────────────────
 
 const CALC = {
@@ -247,7 +283,7 @@ function MaskedPhone() {
 }
 
 // ────────────────────────────────────────────────────────────
-// LEAD-МОДАЛКА (фото + антиспам)
+// LEAD-МОДАЛКА (фото + антиспам + двойной канал отправки)
 // ────────────────────────────────────────────────────────────
 
 function LeadModal({
@@ -275,7 +311,7 @@ function LeadModal({
     }
     setState("sending");
     try {
-      await sendToTelegram({ name, phone, comment, service });
+      await sendLead({ name, phone, comment, service });
       if (photos.length)
         await sendPhotosToTelegram(
           photos,
@@ -388,7 +424,7 @@ function LeadModal({
 }
 
 // ────────────────────────────────────────────────────────────
-// КАЛЬКУЛЯТОР-WIZARD
+// КАЛЬКУЛЯТОР-WIZARD (базовые цены владельца)
 // ────────────────────────────────────────────────────────────
 
 function Calculator() {
@@ -401,7 +437,7 @@ function Calculator() {
   const [tuft, setTuft] = useState(false);
   const [fins, setFins] = useState<string[]>([]);
   const [reps, setReps] = useState<string[]>([]);
-  const [matId, setMatId] = useState("std");
+  const [matId, setMatId] = useState("own");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [photos, setPhotos] = useState<File[]>([]);
@@ -454,7 +490,7 @@ function Calculator() {
       return;
     }
     try {
-      await sendToTelegram({
+      await sendLead({
         name,
         phone,
         comment: summary + `; итог ≈ ${total.toLocaleString("ru-RU")} ₽`,
@@ -502,7 +538,7 @@ function Calculator() {
                 className={chip(typeId === t.id)}
                 onClick={() => setTypeId(t.id)}
               >
-                {t.name}
+                {t.name} · {t.work.toLocaleString("ru-RU")} ₽
               </button>
             ))}
           </div>
@@ -582,17 +618,22 @@ function Calculator() {
           </div>
         )}
         {step === 5 && (
-          <div className="calc-chips">
-            {CALC.materials.map((m) => (
-              <button
-                key={m.id}
-                className={chip(matId === m.id)}
-                onClick={() => setMatId(m.id)}
-              >
-                {m.name}
-                {m.rate ? ` · ${m.rate.toLocaleString("ru-RU")} ₽/м` : ""}
-              </button>
-            ))}
+          <div>
+            <div className="calc-chips">
+              {CALC.materials.map((m) => (
+                <button
+                  key={m.id}
+                  className={chip(matId === m.id)}
+                  onClick={() => setMatId(m.id)}
+                >
+                  {m.name}
+                  {m.rate ? ` · ${m.rate.toLocaleString("ru-RU")} ₽/м` : ""}
+                </button>
+              ))}
+            </div>
+            <p className="calc-hint">
+              Своя ткань — платите только за работу. Расход ≈ {meters} м.
+            </p>
           </div>
         )}
         {step === 6 && (
@@ -645,7 +686,10 @@ function Calculator() {
           ← Назад
         </button>
         <div className="calc-total">
-          <small>Предварительно</small>
+          <small>
+            работа {labor.toLocaleString("ru-RU")} ₽ + материал{" "}
+            {material.toLocaleString("ru-RU")} ₽
+          </small>
           <b>от {total.toLocaleString("ru-RU")} ₽</b>
         </div>
         {step < 6 ? (
@@ -751,7 +795,7 @@ function ContactFab() {
 }
 
 // ────────────────────────────────────────────────────────────
-// ГЛАВНАЯ — «Ателье-атлас»
+// ГЛАВНАЯ
 // ────────────────────────────────────────────────────────────
 
 function Home() {
@@ -808,6 +852,15 @@ function Home() {
 
   return (
     <>
+      {/* БЕГУЩАЯ СТРОКА — САМЫЙ ВЕРХ */}
+      <div className="marquee" aria-hidden="true">
+        <div className="marquee-track">
+          {[...MARQUEE, ...MARQUEE].map((m, i) => (
+            <span key={i}>{m} ✦</span>
+          ))}
+        </div>
+      </div>
+
       {/* ШАПКА */}
       <header className="header">
         <Link to="/" className="logo">
@@ -907,15 +960,6 @@ function Home() {
         </div>
       </section>
 
-      {/* МАРОКИЗА */}
-      <div className="marquee" aria-hidden="true">
-        <div className="marquee-track">
-          {[...MARQUEE, ...MARQUEE].map((m, i) => (
-            <span key={i}>{m} ✦</span>
-          ))}
-        </div>
-      </div>
-
       {/* УСЛУГИ */}
       <section className="section" id="services">
         <div className="section-head">
@@ -939,7 +983,7 @@ function Home() {
         </div>
       </section>
 
-      {/* ТКАНИ */}
+      {/* ТКАНИ: компактная сетка */}
       <section className="section" id="fabrics">
         <div className="section-head">
           <span className="overline">02 · Материалы</span>
@@ -949,9 +993,9 @@ function Home() {
             чтобы открыть коллекции.
           </p>
         </div>
-        <div className="scroll-row">
+        <div className="fabric-grid">
           {CATALOG.map((f) => (
-            <Link to={`/t/${f.id}`} className="scroll-item" key={f.id}>
+            <Link to={`/t/${f.id}`} className="swatch" key={f.id}>
               <span className={`sw ${f.cls}`}>
                 <img
                   src="/sketches/weave.jpg"
@@ -972,10 +1016,19 @@ function Home() {
             </Link>
           ))}
         </div>
-        <p className="scroll-hint">→ листайте вбок</p>
+        <div style={{ textAlign: "center", marginTop: 28 }}>
+          <a
+            className="btn btn-primary"
+            href="https://max.ru/channel_peretyajka"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Привезти образцы бесплатно
+          </a>
+        </div>
       </section>
 
-      {/* ВИТРИНА */}
+      {/* ВИТРИНА: компактные карточки */}
       <section className="section" id="collections">
         <div className="section-head">
           <span className="overline">03 · Коллекции</span>
@@ -1010,8 +1063,8 @@ function Home() {
           <span className="overline">04 · Калькулятор</span>
           <h2>Стоимость за минуту</h2>
           <p className="section-sub">
-            Работа — фикс за тип мебели, дополнения — по честному расходу ткани.
-            Материал — по категории.
+            Работа — фикс за тип мебели. Материал — по категории, своей тканью —
+            только работа.
           </p>
         </div>
         <Calculator />
@@ -1026,7 +1079,7 @@ function Home() {
             Потяните ползунок или наблюдайте — он дышит сам.
           </p>
         </div>
-        <div className="aba-frame">
+        <div className="aba-wrap">
           <AutoBeforeAfter
             before="/works/before.jpg"
             after="/works/after.jpg"
