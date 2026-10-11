@@ -1,195 +1,504 @@
-import { useEffect, useState } from "react";
-import type { FormEvent, ReactNode } from "react";
+import { useState, useEffect, useRef } from "react";
 import { HashRouter, Routes, Route, Link, useParams } from "react-router-dom";
 import { CATALOG, coverOf, shadeOf } from "./data/catalog";
 import type { FabricType, Collection } from "./data/catalog";
 
-/* ============ SOFONIYA · лендинг v3 (наш проект) ============
-   ФОТО: положи в /public файлы hero.jpg, before.jpg, after.jpg
-   БИТРИКС24: вставь свой вебхук в BITRIX_WEBHOOK — заявки уйдут в CRM
-============================================================= */
+// ────────────────────────────────────────────────────────────
+// КОНСТАНТЫ И ХЕЛПЕРЫ
+// ────────────────────────────────────────────────────────────
 
-const BITRIX_WEBHOOK = ""; // пример: 'https://xxx.bitrix24.ru/rest/1/xxxxx/'
+const TG_BOT_TOKEN = import.meta.env.VITE_TG_BOT_TOKEN as string;
+const TG_CHAT_ID = import.meta.env.VITE_TG_CHAT_ID as string;
 
-const LINKS = {
-  vk: "https://vk.ru/dnr_peretyajka_mebeli",
-  tg: "https://t.me/dnr_peretyajka_mebeli",
-  max: "https://max.ru/channel_peretyajka",
-  phone: "+7 949 098-35-32",
-  phoneHref: "tel:+79490983532",
+async function sendToTelegram(data: {
+  name: string;
+  phone: string;
+  comment: string;
+  service: string;
+}) {
+  const text =
+    `🛋 <b>Новая заявка с сайта!</b>\n` +
+    `Услуга: ${data.service}\n` +
+    `Имя: ${data.name || "—"}\n` +
+    `Телефон: ${data.phone}\n` +
+    (data.comment ? `Комментарий: ${data.comment}\n` : "") +
+    `⏰ ${new Date().toLocaleString("ru-RU")}`;
+  const r = await fetch(
+    `https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: TG_CHAT_ID, text, parse_mode: "HTML" }),
+    },
+  );
+  if (!r.ok) throw new Error("TG send failed");
+}
+
+// ────────────────────────────────────────────────────────────
+// КАЛЬКУЛЯТОР: честная формула "работа = 1000 ₽ за метр"
+// Цифры ниже — проверь и правь под свою экономику.
+// ────────────────────────────────────────────────────────────
+
+const CALC = {
+  laborPerM: 1000,
+  types: [
+    { id: "straight", name: "Прямой диван", baseM: 9 },
+    { id: "corner", name: "Угловой диван", baseM: 13 },
+    { id: "armchair", name: "Кресло", baseM: 7 },
+    { id: "chair", name: "Стул", baseM: 3 },
+    { id: "kitchen", name: "Кухонный уголок", baseM: 10 },
+  ],
+  mechanisms: [
+    { id: "none", name: "Без механизма", m: 0 },
+    { id: "book", name: "Книжка", m: 3 },
+    { id: "euro", name: "Еврокнижка", m: 4 },
+    { id: "dolphin", name: "Дельфин", m: 4 },
+    { id: "tick", name: "Тик-так", m: 4 },
+  ],
+  cushionM: 2,
+  tuftMult: 1.5,
+  finishes: [
+    { id: "stitch", name: "Отстрочка", price: 1000 },
+    { id: "kant", name: "Кант", price: 1500 },
+    { id: "nails", name: "Декор. гвозди", price: 2000 },
+    { id: "buttons", name: "Пуговицы", price: 1500 },
+  ],
+  repairs: [
+    { id: "frame", name: "Каркас", price: 3000 },
+    { id: "legs", name: "Опоры", price: 3000 },
+    { id: "mech", name: "Механизм", price: 3000 },
+    { id: "ppu", name: "Замена ППУ", price: 3000 },
+  ],
+  materials: [
+    { id: "own", name: "Своя ткань", rate: 0 },
+    { id: "std", name: "Ткань стандарт", rate: 700 },
+    { id: "prem", name: "Ткань премиум", rate: 1200 },
+    { id: "eco", name: "Экокожа", rate: 1500 },
+    { id: "leather", name: "Натуральная кожа", rate: 6500 },
+  ],
 };
 
-const SERVICES = [
-  {
-    icon: "sofa",
-    title: "Диван",
-    text: "Перетяжка диванов любых форм и размеров. Донецк, Макеевка.",
-    price: "от 25 000 ₽",
-    badge: "Популярно",
-  },
-  {
-    icon: "armchair",
-    title: "Кресло",
-    text: "Реставрация кресел — от классических до современных моделей.",
-    price: "от 15 000 ₽",
-  },
-  {
-    icon: "corner",
-    title: "Угловой диван",
-    text: "Перетяжка угловых диванов с заменой наполнителя. Горловка, весь регион.",
-    price: "от 45 000 ₽",
-    badge: "Выгодно",
-  },
-  {
-    icon: "kitchen",
-    title: "Кухонный уголок",
-    text: "Обновление кухонных уголков — влагостойкие ткани и экокожа.",
-    price: "от 15 000 ₽",
-  },
-  {
-    icon: "office",
-    title: "Офисная мебель",
-    text: "Реставрация офисных кресел и диванов. Корпоративные заказы.",
-    price: "от 9 000 ₽",
-  },
-  {
-    icon: "chair",
-    title: "Стулья",
-    text: "Обивка стульев любых конфигураций. Быстро и качественно.",
-    price: "от 3 000 ₽",
-  },
-];
+// ────────────────────────────────────────────────────────────
+// МАЛЫЕ КОМПОНЕНТЫ
+// ────────────────────────────────────────────────────────────
 
-const STEPS = [
-  {
-    t: "Заявка",
-    d: "Позвоните или оставьте заявку на сайте — предварительная цена за 15 минут.",
-  },
-  {
-    t: "Выезд мастера",
-    d: "Бесплатно приедем с образцами тканей, замерим и назовём точную цену.",
-  },
-  {
-    t: "Реставрация",
-    d: "Каркас, наполнитель и обивка в нашем цеху. Фотоотчёт на каждом этапе.",
-  },
-  {
-    t: "Доставка",
-    d: "Бесплатный вывоз и доставка — привезём, соберём и расставим.",
-  },
-];
-
-/* ---------- Иконки (line-art: тёмно-синий контур + оранжевый акцент) ---------- */
-const ICONS: Record<string, ReactNode> = {
-  sofa: (
-    <>
-      <path d="M14 32V20a6 6 0 0 1 6-6h24a6 6 0 0 1 6 6v12" />
-      <path d="M14 32a5 5 0 0 0-5 5v7a4 4 0 0 0 4 4h38a4 4 0 0 0 4-4v-7a5 5 0 0 0-5-5" />
-      <path d="M14 37h36M32 37v11M13 48v5M51 48v5" />
-      <path className="acc" d="M50 32a5 5 0 0 1 5 5" />
-    </>
-  ),
-  armchair: (
-    <>
-      <path d="M22 32V20a6 6 0 0 1 6-6h8a6 6 0 0 1 6 6v12" />
-      <path d="M22 32a5 5 0 0 0-5 5v7a4 4 0 0 0 4 4h22a4 4 0 0 0 4-4v-7a5 5 0 0 0-5-5" />
-      <path d="M22 37h20M21 48v5M43 48v5" />
-      <path className="acc" d="M42 32a5 5 0 0 1 5 5" />
-    </>
-  ),
-  corner: (
-    <>
-      <path d="M12 34V16a4 4 0 0 1 4-4h14a4 4 0 0 1 4 4v18" />
-      <path d="M12 34a4 4 0 0 0-4 4v10a4 4 0 0 0 4 4h36a4 4 0 0 0 4-4v-6a4 4 0 0 0-4-4H34" />
-      <path d="M34 34v18M12 52v4M52 52v4" />
-      <path className="acc" d="M52 38v6" />
-    </>
-  ),
-  kitchen: (
-    <>
-      <path d="M10 30V18a4 4 0 0 1 4-4h16a4 4 0 0 1 4 4v12" />
-      <path d="M10 30a4 4 0 0 0-4 4v10a4 4 0 0 0 4 4h26" />
-      <path d="M14 52v4M34 52v4" />
-      <path className="acc" d="M34 30h16a4 4 0 0 1 4 4v14" />
-    </>
-  ),
-  office: (
-    <>
-      <path d="M26 8h12v14H26z" />
-      <path d="M20 20v8M44 20v8M32 28v12" />
-      <path d="M32 40l-11 9M32 40l11 9M32 40v11" />
-      <path className="acc" d="M22 26h20" />
-    </>
-  ),
-  chair: (
-    <>
-      <path d="M26 8h12v16H26z" />
-      <path d="M26 16h12M22 26l-2 26M42 26l2 26M23 40h18" />
-      <path className="acc" d="M20 26h24" />
-    </>
-  ),
-  phone: (
-    <path d="M14 10h10l4 12-7 5a30 30 0 0 0 16 16l5-7 12 4v10a4 4 0 0 1-4 4C28 54 10 36 10 14a4 4 0 0 1 4-4z" />
-  ),
-  tg: (
-    <>
-      <path d="M56 10L8 30l14 6 4 16 8-10 12 8z" />
-      <path d="M22 36L56 10" />
-    </>
-  ),
-  chat: <path d="M12 12h40v28H28L18 50V40h-6z" />,
-  pin: (
-    <>
-      <path d="M32 8c-9 0-16 7-16 16 0 12 16 32 16 32s16-20 16-32c0-9-7-16-16-16z" />
-      <circle cx="32" cy="24" r="6" />
-    </>
-  ),
-  clock: (
-    <>
-      <circle cx="32" cy="32" r="22" />
-      <path d="M32 18v14l10 8" />
-    </>
-  ),
-  check: <path d="M12 34l14 14 26-30" />,
-  arrow: <path d="M12 32h36M36 20l12 12-12 12" />,
-};
-
-function Icon({ name, size = 64 }: { name: string; size?: number }) {
+function CoverImg({ t, c }: { t: FabricType; c: Collection }) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 64 64"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2.5}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
+    <span className={`show-media ${t.cls}`}>
+      <img
+        src={coverOf(t, c)}
+        alt={`${c.name} — ${t.name}`}
+        loading="lazy"
+        onError={(e) => {
+          (e.currentTarget as HTMLImageElement).style.display = "none";
+        }}
+      />
+    </span>
+  );
+}
+
+function AutoBeforeAfter({
+  before,
+  after,
+  alt,
+}: {
+  before: string;
+  after: string;
+  alt: string;
+}) {
+  const [pos, setPos] = useState(50);
+  const [hold, setHold] = useState(false);
+  const dir = useRef(1);
+
+  useEffect(() => {
+    if (hold) return;
+    const t = setInterval(() => {
+      setPos((p) => {
+        let n = p + dir.current * 0.4;
+        if (n >= 100) {
+          n = 100;
+          dir.current = -1;
+        }
+        if (n <= 0) {
+          n = 0;
+          dir.current = 1;
+        }
+        return n;
+      });
+    }, 30);
+    return () => clearInterval(t);
+  }, [hold]);
+
+  const move = (x: number, el: HTMLElement) => {
+    const r = el.getBoundingClientRect();
+    setPos(Math.min(100, Math.max(0, ((x - r.left) / r.width) * 100)));
+  };
+
+  return (
+    <div
+      className="aba"
+      onPointerDown={(e) => {
+        setHold(true);
+        e.currentTarget.setPointerCapture(e.pointerId);
+        move(e.clientX, e.currentTarget);
+      }}
+      onPointerMove={(e) => {
+        if (hold) move(e.clientX, e.currentTarget);
+      }}
+      onPointerUp={() => setHold(false)}
+      onPointerCancel={() => setHold(false)}
     >
-      {ICONS[name]}
-    </svg>
+      <img className="aba-img" src={after} alt={alt} draggable={false} />
+      <img
+        className="aba-img"
+        src={before}
+        alt={alt + " — до"}
+        draggable={false}
+        style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}
+      />
+      <div className="aba-line" style={{ left: pos + "%" }}>
+        <span className="aba-handle">⇔</span>
+      </div>
+      <span className="aba-tag" style={{ left: 12 }}>
+        До
+      </span>
+      <span className="aba-tag" style={{ right: 12 }}>
+        После
+      </span>
+    </div>
   );
 }
 
-function LogoMark() {
+function MiniHeader() {
   return (
-    <svg width="42" height="42" viewBox="0 0 64 64" aria-hidden="true">
-      <path
-        fill="#8D99AE"
-        d="M30 12H18a6 6 0 0 0-6 6v12a6 6 0 0 0-6 6v10a6 6 0 0 0 6 6h18z"
-      />
-      <path
-        fill="#E63946"
-        d="M34 12h12a6 6 0 0 1 6 6v12a6 6 0 0 1 6 6v10a6 6 0 0 1-6 6H34z"
-      />
-    </svg>
+    <header className="mini-header">
+      <Link to="/" className="mini-logo">
+        SOFONIYA
+      </Link>
+      <Link to="/" className="back">
+        ← На главную
+      </Link>
+    </header>
   );
 }
 
-/* ---------- Bitrix24 кнопка связи (FAB) ---------- */
+function MiniFooter() {
+  return (
+    <footer className="mini-footer">
+      © {new Date().getFullYear()} SOFONIYA · Перетяжка мебели в ДНР ·{" "}
+      <a href="tel:+79490983532">+7 949 098-35-32</a>
+    </footer>
+  );
+}
 
-/* ---------- Плавающая кнопка связи (FAB) ---------- */
+// ────────────────────────────────────────────────────────────
+// LEAD-МОДАЛКА
+// ────────────────────────────────────────────────────────────
+
+function LeadModal({
+  service,
+  onClose,
+}: {
+  service: string;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [comment, setComment] = useState("");
+  const [state, setState] = useState<"idle" | "sending" | "done" | "error">(
+    "idle",
+  );
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setState("sending");
+    try {
+      await sendToTelegram({ name, phone, comment, service });
+      setState("done");
+    } catch {
+      setState("error");
+    }
+  };
+
+  return (
+    <div className="lm-overlay" onClick={onClose}>
+      <div className="lm-card" onClick={(e) => e.stopPropagation()}>
+        <button className="lm-close" onClick={onClose} aria-label="Закрыть">
+          ✕
+        </button>
+        {state === "done" ? (
+          <div className="lm-done">
+            <h3>Заявка отправлена!</h3>
+            <p>Перезвоним в течение 15 минут в рабочее время.</p>
+            <button className="btn btn-primary" onClick={onClose}>
+              Отлично
+            </button>
+          </div>
+        ) : (
+          <>
+            <h3 className="lm-title">Расчёт: {service}</h3>
+            <form onSubmit={submit} className="lm-form">
+              <input
+                className="lm-input"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Ваше имя"
+                required
+              />
+              <input
+                className="lm-input"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Телефон"
+                type="tel"
+                required
+              />
+              <textarea
+                className="lm-input lm-area"
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="Опишите мебель (необязательно)"
+              />
+              <button
+                className="btn btn-primary lm-submit"
+                type="submit"
+                disabled={state === "sending"}
+              >
+                {state === "sending" ? "Отправляем…" : "Отправить заявку →"}
+              </button>
+              {state === "error" && (
+                <p className="lm-error">
+                  Не удалось отправить. Позвоните{" "}
+                  <a href="tel:+79490983532">+7 949 098-35-32</a> или напишите в{" "}
+                  <a
+                    href="https://t.me/dnr_peretyajka_mebeli"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Telegram
+                  </a>
+                  .
+                </p>
+              )}
+              <small className="lm-note">
+                Нажимая кнопку, вы соглашаетесь с политикой конфиденциальности
+              </small>
+            </form>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────
+// КАЛЬКУЛЯТОР
+// ────────────────────────────────────────────────────────────
+
+function Calculator() {
+  const [typeId, setTypeId] = useState("straight");
+  const [width, setWidth] = useState(2000);
+  const [mechId, setMechId] = useState("none");
+  const [back, setBack] = useState(0);
+  const [seat, setSeat] = useState(0);
+  const [tuft, setTuft] = useState(false);
+  const [fins, setFins] = useState<string[]>([]);
+  const [reps, setReps] = useState<string[]>([]);
+  const [matId, setMatId] = useState("std");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [sent, setSent] = useState(false);
+
+  const type = CALC.types.find((t) => t.id === typeId)!;
+  const mech = CALC.mechanisms.find((m) => m.id === mechId)!;
+  const mat = CALC.materials.find((m) => m.id === matId)!;
+
+  const scale = typeId === "chair" ? 1 : width / 2000;
+  const raw = type.baseM * scale + mech.m + (back + seat) * CALC.cushionM;
+  const meters = Math.round(raw * (tuft ? CALC.tuftMult : 1) * 10) / 10;
+  const finSum = CALC.finishes
+    .filter((f) => fins.includes(f.id))
+    .reduce((s, f) => s + f.price, 0);
+  const repSum = CALC.repairs
+    .filter((r) => reps.includes(r.id))
+    .reduce((s, r) => s + r.price, 0);
+  const labor = Math.round(meters * CALC.laborPerM + finSum + repSum);
+  const material = Math.round(meters * mat.rate);
+  const total = labor + material;
+
+  const toggle = (arr: string[], id: string, set: (v: string[]) => void) =>
+    set(arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id]);
+
+  const summary =
+    `Тип: ${type.name}; ширина ${width} мм; механизм: ${mech.name}; подушки: ${back}+${seat}; ` +
+    `стяжка: ${tuft ? "да" : "нет"}; отделка: ${fins.map((i) => CALC.finishes.find((f) => f.id === i)!.name).join(", ") || "—"}; ` +
+    `ремонт: ${reps.map((i) => CALC.repairs.find((r) => r.id === i)!.name).join(", ") || "—"}; материал: ${mat.name}; расход ≈ ${meters} м`;
+
+  const send = async () => {
+    try {
+      await sendToTelegram({
+        name,
+        phone,
+        comment: summary + `; итог ≈ ${total.toLocaleString("ru-RU")} ₽`,
+        service: "Калькулятор: " + type.name,
+      });
+      setSent(true);
+    } catch {
+      setSent(false);
+    }
+  };
+
+  const chip = (on: boolean) => "calc-chip" + (on ? " on" : "");
+
+  return (
+    <div className="calc">
+      <div className="calc-step">
+        <h4>01 · Что перетягиваем</h4>
+        <div className="calc-chips">
+          {CALC.types.map((t) => (
+            <button
+              key={t.id}
+              className={chip(typeId === t.id)}
+              onClick={() => setTypeId(t.id)}
+            >
+              {t.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {typeId !== "chair" && (
+        <div className="calc-step">
+          <h4>02 · Ширина: {width} мм</h4>
+          <input
+            className="calc-range"
+            type="range"
+            min={1200}
+            max={3200}
+            step={50}
+            value={width}
+            onChange={(e) => setWidth(+e.target.value)}
+          />
+        </div>
+      )}
+
+      <div className="calc-step">
+        <h4>03 · Механизм</h4>
+        <div className="calc-chips">
+          {CALC.mechanisms.map((m) => (
+            <button
+              key={m.id}
+              className={chip(mechId === m.id)}
+              onClick={() => setMechId(m.id)}
+            >
+              {m.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="calc-step">
+        <h4>04 · Съёмные подушки</h4>
+        <div className="calc-chips">
+          <span className="calc-stepper">
+            Спинки{" "}
+            <button onClick={() => setBack(Math.max(0, back - 1))}>−</button>
+            <b>{back}</b>
+            <button onClick={() => setBack(back + 1)}>+</button>
+          </span>
+          <span className="calc-stepper">
+            Сиденья{" "}
+            <button onClick={() => setSeat(Math.max(0, seat - 1))}>−</button>
+            <b>{seat}</b>
+            <button onClick={() => setSeat(seat + 1)}>+</button>
+          </span>
+          <button className={chip(tuft)} onClick={() => setTuft(!tuft)}>
+            Каретная стяжка ×1,5
+          </button>
+        </div>
+      </div>
+
+      <div className="calc-step">
+        <h4>05 · Отделка и ремонт</h4>
+        <div className="calc-chips">
+          {CALC.finishes.map((f) => (
+            <button
+              key={f.id}
+              className={chip(fins.includes(f.id))}
+              onClick={() => toggle(fins, f.id, setFins)}
+            >
+              {f.name} +{f.price.toLocaleString("ru-RU")} ₽
+            </button>
+          ))}
+          {CALC.repairs.map((r) => (
+            <button
+              key={r.id}
+              className={chip(reps.includes(r.id))}
+              onClick={() => toggle(reps, r.id, setReps)}
+            >
+              {r.name} +{r.price.toLocaleString("ru-RU")} ₽
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="calc-step">
+        <h4>06 · Материал</h4>
+        <div className="calc-chips">
+          {CALC.materials.map((m) => (
+            <button
+              key={m.id}
+              className={chip(matId === m.id)}
+              onClick={() => setMatId(m.id)}
+            >
+              {m.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="calc-result">
+        <small>
+          Расход ≈ {meters} м · работа {labor.toLocaleString("ru-RU")} ₽ ·
+          материал {material.toLocaleString("ru-RU")} ₽
+        </small>
+        <span className="total">от {total.toLocaleString("ru-RU")} ₽</span>
+        <small>
+          Предварительно по фабричным нормам. Точную цену зафиксируем после
+          замера.
+        </small>
+      </div>
+
+      <div className="calc-send">
+        <input
+          className="lm-input"
+          placeholder="Ваше имя"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+        <input
+          className="lm-input"
+          placeholder="Телефон"
+          type="tel"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+        />
+        <button
+          className="btn btn-primary"
+          onClick={send}
+          disabled={!phone || sent}
+        >
+          {sent ? "Расчёт отправлен мастеру ✓" : "Отправить расчёт мастеру →"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────
+// FAB: 4 контакта (VK, TG, MAX, телефон), БЕЗ чата
+// ────────────────────────────────────────────────────────────
+
 function ContactFab() {
   const [i, setI] = useState(0);
   const [open, setOpen] = useState(false);
@@ -290,221 +599,80 @@ function ContactFab() {
   );
 }
 
-/* ---------- Модальная форма заявки (заглушка Битрикс24) ---------- */
-function LeadModal({
-  service,
-  onClose,
-}: {
-  service: string;
-  onClose: () => void;
-}) {
-  const [sent, setSent] = useState(false);
-  async function submit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const f = new FormData(e.currentTarget);
-    if (BITRIX_WEBHOOK) {
-      const q = new URLSearchParams({
-        "fields[TITLE]": `Заявка с сайта: ${service}`,
-        "fields[NAME]": String(f.get("name") || ""),
-        "fields[PHONE][0][VALUE]": String(f.get("phone") || ""),
-        "fields[COMMENTS]": `${service}. ${f.get("msg") || ""}`,
-      });
-      await fetch(`${BITRIX_WEBHOOK}crm.lead.add?${q}`).catch(() => {});
-    }
-    setSent(true);
-  }
-  return (
-    <div className="modal" onClick={onClose}>
-      <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-x" onClick={onClose}>
-          ✕
-        </button>
-        {sent ? (
-          <div className="modal-ok">
-            <Icon name="check" size={48} />
-            <h3>Заявка отправлена!</h3>
-            <p>Мастер свяжется с вами в течение 15 минут в рабочее время.</p>
-          </div>
-        ) : (
-          <form onSubmit={submit}>
-            <h3>{service}</h3>
-            <input name="name" placeholder="Ваше имя" required />
-            <input name="phone" type="tel" placeholder="Телефон" required />
-            <textarea
-              name="msg"
-              placeholder="Опишите мебель (необязательно)"
-              rows={3}
-            />
-            <button className="btn btn-primary" type="submit">
-              Отправить заявку <Icon name="arrow" size={18} />
-            </button>
-            <small>
-              Нажимая кнопку, вы соглашаетесь с политикой конфиденциальности
-            </small>
-          </form>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ---------- Слайдер До / После ---------- */
-function BeforeAfter() {
-  const [pos, setPos] = useState(50);
-  return (
-    <div className="ba">
-      <div className="ba-img ba-after" />
-      <div
-        className="ba-img ba-before"
-        style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}
-      />
-      <div className="ba-handle" style={{ left: `${pos}%` }} />
-      <span className="ba-label left">До</span>
-      <span className="ba-label right">После</span>
-      <input
-        type="range"
-        min={0}
-        max={100}
-        value={pos}
-        aria-label="Сравнение до и после"
-        onChange={(e) => setPos(+e.target.value)}
-      />
-    </div>
-  );
-}
+// ────────────────────────────────────────────────────────────
+// ГЛАВНАЯ
+// ────────────────────────────────────────────────────────────
 
 function Home() {
   const [modal, setModal] = useState<string | null>(null);
-  const [menu, setMenu] = useState(false);
+
+  const SERVICES = [
+    { name: "Перетяжка дивана", desc: "Прямые, угловые, модульные" },
+    { name: "Перетяжка кресла", desc: "Вольтеровские, офисные, каминные" },
+    { name: "Стулья и банкетки", desc: "Обеденные группы комплектом" },
+    { name: "Изголовья и панели", desc: "Мягкие стеновые панели" },
+    { name: "Каретная стяжка", desc: "Капитоне, пуговицы, кант" },
+    { name: "Ремонт мебели", desc: "Каркас, механизм, пружины" },
+  ];
 
   return (
-    <div id="top">
-      {/* ШАПКА */}
-      <header className="header">
-        <a className="logo" href="#top">
-          <LogoMark />
-          <span>
-            SOFONIYA<small>реставрация мебели</small>
-          </span>
-        </a>
-        <nav
-          className={`nav ${menu ? "show" : ""}`}
-          onClick={() => setMenu(false)}
-        >
-          <a href="#services">Услуги</a>
-          <a href="#works">Работы</a>
-          <a href="#fabrics">Ткани</a>
-          <a href="#process">О нас</a>
-          <a href="#contacts">Контакты</a>
-        </nav>
-        <div className="header-cta">
-          <a
-            className="btn btn-outline"
-            href={LINKS.tg}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <Icon name="tg" size={18} /> Telegram
-          </a>
-          <a
-            className="btn btn-outline"
-            href={LINKS.max}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <span className="max-badge">MAX</span> MAX
-          </a>
-          <button
-            className="burger"
-            onClick={() => setMenu((m) => !m)}
-            aria-label="Меню"
-          >
-            ☰
-          </button>
-        </div>
-      </header>
-
-      {/* ПЕРВЫЙ ЭКРАН */}
+    <>
+      {/* HERO */}
       <section className="hero">
-        <div className="hero-left">
-          <span className="geo-pill">● ДНР · ДОНЕЦК · МАКЕЕВКА</span>
+        <img
+          className="hero-img"
+          src="/works/hero.jpg"
+          alt="Мастер за работой"
+        />
+        <div className="hero-inner">
+          <span className="hero-tag">Перетяжка мебели в ДНР</span>
           <h1>
-            Профессиональная <em>перетяжка мебели</em> в ДНР с бесплатным
-            выездом
+            Ваш диван станет <span className="accent">лучше нового</span>
           </h1>
           <p>
-            Подарите любимому дивану вторую жизнь за <b>7 дней</b>. Цена без
-            накруток — только материал и работа.
+            Собственное производство. Фиксированная цена в договоре. Гарантия на
+            работы.
           </p>
-          <div className="hero-badges">
-            <span>
-              <Icon name="check" size={16} /> Гарантия 1 года
-            </span>
-            <span>
-              <Icon name="check" size={16} /> Бесплатный замер
-            </span>
-            <span>
-              <Icon name="check" size={16} /> Вывоз и доставка 0 ₽
-            </span>
-          </div>
-          <div className="hero-btns">
+          <div className="hero-actions">
             <button
               className="btn btn-primary"
-              onClick={() => setModal("Расчёт стоимости")}
+              onClick={() => setModal("Рассчитать стоимость")}
             >
-              Рассчитать стоимость <Icon name="arrow" size={18} />
+              Рассчитать стоимость
             </button>
-            <a className="btn btn-ghost" href="#works">
-              Наши работы
+            <a className="btn btn-ghost" href="tel:+79490983532">
+              +7 949 098-35-32
             </a>
           </div>
         </div>
-        <div
-          className="hero-photo"
-          style={{
-            backgroundImage: "url('/works/hero.jpg')",
-          }}
-        />
       </section>
 
       {/* УСЛУГИ */}
       <section className="section" id="services">
-        <h2>Что мы перетягиваем</h2>
-        <div className="grid-services">
+        <h2 className="section-title">Что мы перетягиваем</h2>
+        <div className="services-grid">
           {SERVICES.map((s) => (
-            <div className="card" key={s.title}>
-              {s.badge && <span className="card-badge">{s.badge}</span>}
-              <Icon name={s.icon} size={64} />
-              <h3>{s.title}</h3>
-              <p>{s.text}</p>
-              <div className="card-row">
-                <b>{s.price}</b>
-                <button
-                  className="link"
-                  onClick={() => setModal(`Расчёт: ${s.title}`)}
-                >
-                  Рассчитать <Icon name="arrow" size={16} />
-                </button>
-              </div>
+            <div
+              className="svc-card"
+              key={s.name}
+              onClick={() => setModal(s.name)}
+            >
+              <h3>{s.name}</h3>
+              <p>{s.desc}</p>
+              <span className="svc-more">Узнать стоимость →</span>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ДО / ПОСЛЕ */}
-      <section className="section" id="works">
-        <h2>Выполненные работы: до и после</h2>
-        <BeforeAfter />
-        <p className="ba-caption">
-          Заменили поролон, усилили каркас, обили антивандальным велюром. Срок:
-          4 дня. Донецк.
-        </p>
-      </section>
-
-      {/* ТКАНИ */}
+      {/* ТКАНИ: кружки с чернильным скетчем weave */}
       <section className="section" id="fabrics">
-        <h2>Выберите идеальную ткань</h2>
-        <div className="grid-fabrics">
+        <h2 className="section-title">Выберите идеальную ткань</h2>
+        <p className="section-sub">
+          10 типов материалов. Нажмите на круг — покажем все коллекции этого
+          типа.
+        </p>
+        <div className="swatches">
           {CATALOG.map((f) => (
             <Link to={`/t/${f.id}`} className="swatch" key={f.id}>
               <span className={`sw ${f.cls}`}>
@@ -513,7 +681,8 @@ function Home() {
                   alt={`Структура материала: ${f.name}`}
                   loading="lazy"
                   onError={(e) => {
-                    e.currentTarget.style.display = "none";
+                    (e.currentTarget as HTMLImageElement).style.display =
+                      "none";
                   }}
                 />
               </span>
@@ -526,12 +695,16 @@ function Home() {
             </Link>
           ))}
         </div>
-        <button
-          className="btn btn-primary"
-          onClick={() => setModal("Привезти образцы тканей")}
-        >
-          Привезти образцы бесплатно
-        </button>
+        <div style={{ textAlign: "center", marginTop: 24 }}>
+          <a
+            className="btn btn-primary"
+            href="https://t.me/dnr_peretyajka_mebeli"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Привезти образцы бесплатно
+          </a>
+        </div>
       </section>
 
       {/* ВИТРИНА КОЛЛЕКЦИЙ */}
@@ -580,162 +753,236 @@ function Home() {
         </div>
       </section>
 
-      {/* ЭТАПЫ */}
-      <section className="section" id="process">
-        <h2>Как мы работаем</h2>
-        <div className="steps">
-          {STEPS.map((s, n) => (
-            <div className="step" key={s.t}>
-              <span className="step-num">{n + 1}</span>
-              <h3>{s.t}</h3>
-              <p>{s.d}</p>
+      {/* КАЛЬКУЛЯТОР */}
+      <section id="calc" className="section" style={{ background: "#F7F6F3" }}>
+        <h2
+          style={{
+            textAlign: "center",
+            fontSize: "clamp(26px, 3.4vw, 38px)",
+            marginBottom: 12,
+          }}
+        >
+          Рассчитайте стоимость за минуту
+        </h2>
+        <p
+          style={{
+            textAlign: "center",
+            color: "#8D99AE",
+            maxWidth: 720,
+            margin: "0 auto 32px",
+          }}
+        >
+          Честная формула: работа считается по расходу ткани, материал — по
+          категории. Без скрытых «+» в конце.
+        </p>
+        <Calculator />
+      </section>
+
+      {/* ДО / ПОСЛЕ */}
+      <section className="section" id="works">
+        <h2 className="section-title">До и после</h2>
+        <p className="section-sub">
+          Потяните ползунок или просто наблюдайте — он дышит сам.
+        </p>
+        <div style={{ maxWidth: 900, margin: "0 auto" }}>
+          <AutoBeforeAfter
+            before="/works/before.jpg"
+            after="/works/after.jpg"
+            alt="Перетяжка дивана: до и после"
+          />
+        </div>
+      </section>
+
+      {/* ПРОЦЕСС */}
+      <section id="process" className="section" style={{ background: "#fff" }}>
+        <h2
+          style={{
+            textAlign: "center",
+            fontSize: "clamp(26px, 3.4vw, 38px)",
+            marginBottom: 40,
+          }}
+        >
+          Как мы работаем
+        </h2>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: 20,
+            maxWidth: 1100,
+            margin: "0 auto",
+          }}
+        >
+          {[
+            {
+              n: "01",
+              t: "Заявка и расчёт",
+              d: "Пришлите фото — назовём точную стоимость бесплатно",
+            },
+            {
+              n: "02",
+              t: "Замер и образцы",
+              d: "Привозим ткани и кожу, помогаем с выбором",
+            },
+            {
+              n: "03",
+              t: "Договор и фикс-цена",
+              d: "Стоимость не меняется после начала работ",
+            },
+            {
+              n: "04",
+              t: "Демонтаж и диагностика",
+              d: "Проверяем каркас, ремни, наполнитель",
+            },
+            {
+              n: "05",
+              t: "Пошив и сборка",
+              d: "Лекала, чехол, фабричный наполнитель",
+            },
+            {
+              n: "06",
+              t: "Доставка и гарантия",
+              d: "Привозим обратно и выдаём гарантию",
+            },
+          ].map((s) => (
+            <div
+              key={s.n}
+              style={{
+                padding: 24,
+                border: "1px solid #e5e2da",
+                borderRadius: 14,
+                background: "#F7F6F3",
+              }}
+            >
+              <div style={{ color: "#FF6B00", fontWeight: 800, fontSize: 14 }}>
+                {s.n}
+              </div>
+              <h3 style={{ margin: "8px 0", color: "#1A1A2E", fontSize: 18 }}>
+                {s.t}
+              </h3>
+              <p style={{ color: "#55596a", fontSize: 14, margin: 0 }}>{s.d}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* GEO-SEO БЛОК */}
-      <section className="section seo">
-        <h2>Перетяжка мебели в ДНР и Донецкой области</h2>
-        <p>
-          Мастерская SOFONIYA выполняет перетяжку и ремонт мягкой мебели по всей
-          Республике:{" "}
-          <b>
-            Донецк, Макеевка, Горловка, Енакиево, Харцызск, Торез, Шахтёрск,
-            Мариуполь
-          </b>{" "}
-          и другие населённые пункты Донецкой области. Бесплатный выезд
-          замерщика с образцами тканей, бесплатный вывоз и доставка мебели,
-          договор и гарантия 2 года.
-        </p>
+      {/* FAQ */}
+      <section className="section" id="faq">
+        <h2 className="section-title">Частые вопросы</h2>
+        <div style={{ maxWidth: 800, margin: "0 auto" }}>
+          {[
+            {
+              q: "Сколько стоит перетяжка?",
+              a: "Стул от 2 000 ₽, кресло от 9 000 ₽, диван от 11 000 ₽. Точную цену назовём по фото или замере.",
+            },
+            {
+              q: "Можно ли своей тканью?",
+              a: "Да, тогда платите только за работу. Образцы можно привезти свои или выбрать из наших.",
+            },
+            {
+              q: "Сколько времени занимает?",
+              a: "Обычно 7–14 дней. С каретной стяжкой и нестандартной геометрией — дольше.",
+            },
+            {
+              q: "Даёте гарантию?",
+              a: "Да, гарантия на работы прописывается в договоре.",
+            },
+            {
+              q: "Забираете и привозите мебель?",
+              a: "Да, организуем вывоз на производство и доставку обратно.",
+            },
+          ].map((f, i) => (
+            <details
+              key={i}
+              style={{ borderBottom: "1px solid #e5e2da", padding: "16px 0" }}
+            >
+              <summary
+                style={{ cursor: "pointer", fontWeight: 700, color: "#1A1A2E" }}
+              >
+                {f.q}
+              </summary>
+              <p style={{ color: "#55596a", marginTop: 12 }}>{f.a}</p>
+            </details>
+          ))}
+        </div>
       </section>
 
-      {/* ПОДВАЛ (без формы, с картой) */}
-      <footer className="footer" id="contacts">
-        <div className="footer-grid">
+      {/* КОНТАКТЫ */}
+      <section
+        className="section"
+        id="contacts"
+        style={{ background: "#1A1A2E", color: "#fff" }}
+      >
+        <h2
+          style={{
+            textAlign: "center",
+            fontSize: "clamp(26px, 3.4vw, 38px)",
+            marginBottom: 24,
+          }}
+        >
+          Связаться с нами
+        </h2>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+            gap: 24,
+            maxWidth: 900,
+            margin: "0 auto",
+            textAlign: "center",
+          }}
+        >
           <div>
-            <div className="logo light">
-              <LogoMark />
-              <span>SOFONIYA</span>
-            </div>
-            <p>
-              Профессиональная перетяжка и реставрация мебели в ДНР. Работаем по
-              всему Донецкому региону.
-            </p>
-            <div className="socials">
-              <a
-                href={LINKS.vk}
-                target="_blank"
-                rel="noreferrer"
-                aria-label="VK"
-              >
-                VK
-              </a>
-              <a
-                href={LINKS.tg}
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Telegram"
-              >
-                <Icon name="tg" size={16} />
-              </a>
-              <a
-                href={LINKS.max}
-                target="_blank"
-                rel="noreferrer"
-                aria-label="MAX"
-              >
-                MAX
-              </a>
-            </div>
+            <div style={{ color: "#FF6B00", fontWeight: 800 }}>Телефон</div>
+            <a
+              href="tel:+79490983532"
+              style={{ color: "#fff", fontSize: 20, textDecoration: "none" }}
+            >
+              +7 949 098-35-32
+            </a>
           </div>
           <div>
-            <h4>Контакты</h4>
-            <p>
-              <Icon name="phone" size={18} />{" "}
-              <a href={LINKS.phoneHref}>{LINKS.phone}</a>
-            </p>
-            <p>
-              <Icon name="pin" size={18} /> Донецк, ул. Артёма, 123
-            </p>
-            <p>
-              <Icon name="clock" size={18} /> Пн–Сб: 9:00–19:00
-            </p>
+            <div style={{ color: "#FF6B00", fontWeight: 800 }}>Telegram</div>
+            <a
+              href="https://t.me/dnr_peretyajka_mebeli"
+              target="_blank"
+              rel="noreferrer"
+              style={{ color: "#fff", textDecoration: "none" }}
+            >
+              @dnr_peretyajka_mebeli
+            </a>
           </div>
           <div>
-            <h4>Мы на карте</h4>
-            {/* Вставь сюда iframe виджета Яндекс.Карт / 2GIS */}
-            <div className="map">
-              <Icon name="pin" size={32} />
-              <small>Встроенная карта (Яндекс.Карты / 2GIS)</small>
-              <a
-                href="https://yandex.ru/maps/?text=Донецк%20улица%20Артёма%20123"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Открыть маршрут →
-              </a>
-            </div>
+            <div style={{ color: "#FF6B00", fontWeight: 800 }}>Соцсети</div>
+            <a
+              href="https://vk.ru/dnr_peretyajka_mebeli"
+              target="_blank"
+              rel="noreferrer"
+              style={{ color: "#fff", textDecoration: "none" }}
+            >
+              ВКонтакте
+            </a>
           </div>
         </div>
-        <div className="footer-bottom">
-          <span>
-            © {new Date().getFullYear()} SOFONIYA. Все права защищены. Работаем
-            в ДНР.
-          </span>
-          <span>
-            <a href="#">Политика конфиденциальности</a> · <a href="#">Оферта</a>
-          </span>
-        </div>
+      </section>
+
+      {/* ФУТЕР */}
+      <footer className="footer">
+        © {new Date().getFullYear()} SOFONIYA · Перетяжка мебели в ДНР
       </footer>
 
+      {/* FAB */}
       <ContactFab />
+
+      {/* МОДАЛКА */}
       {modal && <LeadModal service={modal} onClose={() => setModal(null)} />}
-    </div>
+    </>
   );
 }
-function CoverImg({ t, c }: { t: FabricType; c: Collection }) {
-  return (
-    <span className={`show-media ${t.cls}`}>
-      <img
-        src={coverOf(t, c)}
-        alt={`${c.name} — ${t.name}`}
-        loading="lazy"
-        onError={(e) => {
-          e.currentTarget.style.display = "none";
-        }}
-      />
-    </span>
-  );
-}
-function MiniHeader() {
-  return (
-    <header className="mini-header">
-      <Link to="/" className="mini-logo">
-        SOFONIYA
-      </Link>
-      <Link to="/" className="back">
-        ← На главную
-      </Link>
-    </header>
-  );
-}
-function MiniFooter() {
-  return (
-    <footer className="mini-footer">
-      © {new Date().getFullYear()} SOFONIYA · Перетяжка мебели в ДНР ·{" "}
-      <a href="tel:+79490983532">+7 949 098-35-32</a>
-    </footer>
-  );
-}
-function EmptyNote() {
-  return (
-    <p className="empty-note">
-      «Коллекции этого материала наполняем. На замере мастер привезёт образцы и
-      поможет с выбором.»
-    </p>
-  );
-}
+
+// ────────────────────────────────────────────────────────────
+// СТРАНИЦА ТИПА ТКАНИ
+// ────────────────────────────────────────────────────────────
 
 function TypePage() {
   const { typeId } = useParams();
@@ -747,7 +994,10 @@ function TypePage() {
       <section className="section">
         <h1 className="page-title">{t.name}</h1>
         {t.collections.length === 0 ? (
-          <EmptyNote />
+          <p className="empty-note">
+            Коллекции этого материала наполняем. На замере мастер привезёт
+            образцы и поможет с выбором.
+          </p>
         ) : (
           <div className="cols-grid">
             {t.collections.map((c) => (
@@ -758,7 +1008,8 @@ function TypePage() {
                     alt={c.name}
                     loading="lazy"
                     onError={(e) => {
-                      e.currentTarget.style.display = "none";
+                      (e.currentTarget as HTMLImageElement).style.display =
+                        "none";
                     }}
                   />
                 </div>
@@ -784,6 +1035,10 @@ function TypePage() {
     </div>
   );
 }
+
+// ────────────────────────────────────────────────────────────
+// СТРАНИЦА КОЛЛЕКЦИИ
+// ────────────────────────────────────────────────────────────
 
 function CollectionPage() {
   const { typeId, colId } = useParams();
@@ -826,6 +1081,12 @@ function CollectionPage() {
             ))
           )}
         </div>
+        <ul className="specs">
+          {c.thick && <li>Толщина: {c.thick}</li>}
+          {c.width && <li>Ширина: {c.width}</li>}
+          {c.roll && <li>В рулоне: {c.roll}</li>}
+          {c.effect && <li>Эффект: {c.effect}</li>}
+        </ul>
         <div style={{ textAlign: "center", marginTop: 32 }}>
           <a
             className="btn btn-primary"
@@ -841,6 +1102,10 @@ function CollectionPage() {
     </div>
   );
 }
+
+// ────────────────────────────────────────────────────────────
+// РОУТЕР
+// ────────────────────────────────────────────────────────────
 
 export default function App() {
   return (

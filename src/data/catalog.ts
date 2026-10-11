@@ -8,6 +8,9 @@ export type Collection = {
   name: string;
   kind: string;
   thick?: string;
+  width?: string;
+  roll?: string;
+  effect?: string;
   shades: Shade[];
 };
 export type FabricType = {

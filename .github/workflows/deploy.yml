@@ -29,3 +29,8 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+      - name: Build
+        run: npm ci && npm run build
+        env:
+          VITE_TG_BOT_TOKEN: ${{ secrets.VITE_TG_BOT_TOKEN }}
+          VITE_TG_CHAT_ID: ${{ secrets.VITE_TG_CHAT_ID }}
