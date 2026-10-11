@@ -10,6 +10,28 @@ import type { FabricType, Collection } from "./data/catalog";
 const TG_BOT_TOKEN = import.meta.env.VITE_TG_BOT_TOKEN as string;
 const TG_CHAT_ID = import.meta.env.VITE_TG_CHAT_ID as string;
 
+const PHONE_PATH = (
+  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" />
+);
+const TG_PATH = <path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" />;
+
+function svgIcon(d: React.ReactNode, size = 22) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {d}
+    </svg>
+  );
+}
+
 async function sendToTelegram(data: {
   name: string;
   phone: string;
@@ -48,8 +70,7 @@ async function sendPhotosToTelegram(files: File[], caption: string) {
 }
 
 // ────────────────────────────────────────────────────────────
-// КАЛЬКУЛЯТОР: честная формула «работа = 1000 ₽ за метр»
-// Цифры ниже — твоя экономика, правь смело.
+// ЭКОНОМИКА КАЛЬКУЛЯТОРА (правка под себя — только цифры)
 // ────────────────────────────────────────────────────────────
 
 const CALC = {
@@ -84,10 +105,10 @@ const CALC = {
   ],
   materials: [
     { id: "own", name: "Своя ткань", rate: 0 },
-    { id: "std", name: "Ткань стандарт", rate: 700 },
-    { id: "prem", name: "Ткань премиум", rate: 1200 },
-    { id: "eco", name: "Экокожа", rate: 1500 },
-    { id: "leather", name: "Натуральная кожа", rate: 6500 },
+    { id: "std", name: "Ткань стандарт", rate: 1000 },
+    { id: "prem", name: "Ткань премиум", rate: 3000 },
+    { id: "eco", name: "Экокожа", rate: 5000 },
+    { id: "leather", name: "Натуральная кожа", rate: 10000 },
   ],
 };
 
@@ -198,9 +219,21 @@ function MiniHeader() {
 function MiniFooter() {
   return (
     <footer className="mini-footer">
-      © {new Date().getFullYear()} SOFONIYA · Перетяжка мебели в ДНР ·{" "}
-      <a href="tel:+79490983532">+7 949 098-35-32</a>
+      © {new Date().getFullYear()} SOFONIYA · Перетяжка мебели в ДНР
     </footer>
+  );
+}
+
+function MaskedPhone() {
+  const [show, setShow] = useState(false);
+  return show ? (
+    <a className="footer-phone" href="tel:+79490983532">
+      +7 949 098-35-32
+    </a>
+  ) : (
+    <button className="footer-phone masked" onClick={() => setShow(true)}>
+      +7 949 098-••-•• <i>показать</i>
+    </button>
   );
 }
 
@@ -228,18 +261,17 @@ function LeadModal({
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (hp.trim() !== "" || Date.now() - openedAt.current < 4000) {
-      setState("done"); // бот верит в успех, заявка не уходит
+      setState("done");
       return;
     }
     setState("sending");
     try {
       await sendToTelegram({ name, phone, comment, service });
-      if (photos.length) {
+      if (photos.length)
         await sendPhotosToTelegram(
           photos,
           `📎 Фото к заявке: ${service}, ${phone}`,
         ).catch(() => {});
-      }
       setState("done");
     } catch {
       setState("error");
@@ -316,8 +348,15 @@ function LeadModal({
               </button>
               {state === "error" && (
                 <p className="lm-error">
-                  Не удалось отправить. Позвоните{" "}
-                  <a href="tel:+79490983532">+7 949 098-35-32</a> или напишите в{" "}
+                  Не удалось отправить. Позвоните мастеру или напишите в{" "}
+                  <a
+                    href="https://max.ru/channel_peretyajka"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    MAX
+                  </a>{" "}
+                  /{" "}
                   <a
                     href="https://t.me/dnr_peretyajka_mebeli"
                     target="_blank"
@@ -340,10 +379,11 @@ function LeadModal({
 }
 
 // ────────────────────────────────────────────────────────────
-// КАЛЬКУЛЯТОР (фото + антиспам)
+// КАЛЬКУЛЯТОР-MASTER: пошаговый wizard с живым итогом
 // ────────────────────────────────────────────────────────────
 
 function Calculator() {
+  const [step, setStep] = useState(0);
   const [typeId, setTypeId] = useState("straight");
   const [width, setWidth] = useState(2000);
   const [mechId, setMechId] = useState("none");
@@ -380,6 +420,16 @@ function Calculator() {
   const toggle = (arr: string[], id: string, set: (v: string[]) => void) =>
     set(arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id]);
 
+  const steps = [
+    "Мебель",
+    "Размер",
+    "Механизм",
+    "Подушки",
+    "Отделка",
+    "Материал",
+    "Контакты",
+  ];
+
   const summary =
     `Тип: ${type.name}; ширина ${width} мм; механизм: ${mech.name}; подушки: ${back}+${seat}; ` +
     `стяжка: ${tuft ? "да" : "нет"}; отделка: ${fins.map((i) => CALC.finishes.find((f) => f.id === i)!.name).join(", ") || "—"}; ` +
@@ -397,12 +447,11 @@ function Calculator() {
         comment: summary + `; итог ≈ ${total.toLocaleString("ru-RU")} ₽`,
         service: "Калькулятор: " + type.name,
       });
-      if (photos.length) {
+      if (photos.length)
         await sendPhotosToTelegram(
           photos,
           `📎 Фото к расчёту: ${type.name}, ${phone}`,
         ).catch(() => {});
-      }
       setSent(true);
     } catch {
       setSent(false);
@@ -413,173 +462,199 @@ function Calculator() {
 
   return (
     <div className="calc">
-      <div className="calc-step">
-        <h4>01 · Что перетягиваем</h4>
-        <div className="calc-chips">
-          {CALC.types.map((t) => (
-            <button
-              key={t.id}
-              className={chip(typeId === t.id)}
-              onClick={() => setTypeId(t.id)}
-            >
-              {t.name}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {typeId !== "chair" && (
-        <div className="calc-step">
-          <h4>02 · Ширина: {width} мм</h4>
-          <input
-            className="calc-range"
-            type="range"
-            min={1200}
-            max={3200}
-            step={50}
-            value={width}
-            onChange={(e) => setWidth(+e.target.value)}
-          />
-        </div>
-      )}
-
-      <div className="calc-step">
-        <h4>03 · Механизм</h4>
-        <div className="calc-chips">
-          {CALC.mechanisms.map((m) => (
-            <button
-              key={m.id}
-              className={chip(mechId === m.id)}
-              onClick={() => setMechId(m.id)}
-            >
-              {m.name}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="calc-step">
-        <h4>04 · Съёмные подушки</h4>
-        <div className="calc-chips">
-          <span className="calc-stepper">
-            Спинки{" "}
-            <button onClick={() => setBack(Math.max(0, back - 1))}>−</button>
-            <b>{back}</b>
-            <button onClick={() => setBack(back + 1)}>+</button>
-          </span>
-          <span className="calc-stepper">
-            Сиденья{" "}
-            <button onClick={() => setSeat(Math.max(0, seat - 1))}>−</button>
-            <b>{seat}</b>
-            <button onClick={() => setSeat(seat + 1)}>+</button>
-          </span>
-          <button className={chip(tuft)} onClick={() => setTuft(!tuft)}>
-            Каретная стяжка ×1,5
-          </button>
-        </div>
-      </div>
-
-      <div className="calc-step">
-        <h4>05 · Отделка и ремонт</h4>
-        <div className="calc-chips">
-          {CALC.finishes.map((f) => (
-            <button
-              key={f.id}
-              className={chip(fins.includes(f.id))}
-              onClick={() => toggle(fins, f.id, setFins)}
-            >
-              {f.name} +{f.price.toLocaleString("ru-RU")} ₽
-            </button>
-          ))}
-          {CALC.repairs.map((r) => (
-            <button
-              key={r.id}
-              className={chip(reps.includes(r.id))}
-              onClick={() => toggle(reps, r.id, setReps)}
-            >
-              {r.name} +{r.price.toLocaleString("ru-RU")} ₽
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="calc-step">
-        <h4>06 · Материал</h4>
-        <div className="calc-chips">
-          {CALC.materials.map((m) => (
-            <button
-              key={m.id}
-              className={chip(matId === m.id)}
-              onClick={() => setMatId(m.id)}
-            >
-              {m.name}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="calc-result">
-        <small>
-          Расход ≈ {meters} м · работа {labor.toLocaleString("ru-RU")} ₽ ·
-          материал {material.toLocaleString("ru-RU")} ₽
-        </small>
-        <span className="total">от {total.toLocaleString("ru-RU")} ₽</span>
-        <small>
-          Предварительно по фабричным нормам. Точную цену зафиксируем после
-          замера.
-        </small>
-      </div>
-
-      <div className="calc-send">
-        <input
-          className="lm-input"
-          placeholder="Ваше имя"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <input
-          className="lm-input"
-          placeholder="Телефон"
-          type="tel"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-        />
-        <label className="lm-file">
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            hidden
-            onChange={(e) =>
-              setPhotos(Array.from(e.target.files || []).slice(0, 3))
+      <div className="calc-progress">
+        {steps.map((s, i) => (
+          <button
+            key={s}
+            className={
+              "cp-dot" + (i === step ? " on" : i < step ? " done" : "")
             }
-          />
-          {photos.length
-            ? `📎 Фото прикреплено: ${photos.length}`
-            : "📎 Прикрепить фото мебели (до 3 шт)"}
-        </label>
-        <input
-          className="lm-hp"
-          tabIndex={-1}
-          autoComplete="off"
-          value={hp}
-          onChange={(e) => setHp(e.target.value)}
-          placeholder="Не заполняйте это поле"
-        />
+            onClick={() => setStep(i)}
+            title={s}
+          >
+            {i < step ? "✓" : i + 1}
+          </button>
+        ))}
+        <div className="cp-bar">
+          <span style={{ width: `${(step / (steps.length - 1)) * 100}%` }} />
+        </div>
+      </div>
+
+      <div className="calc-body">
+        {step === 0 && (
+          <div className="calc-chips">
+            {CALC.types.map((t) => (
+              <button
+                key={t.id}
+                className={chip(typeId === t.id)}
+                onClick={() => setTypeId(t.id)}
+              >
+                {t.name}
+              </button>
+            ))}
+          </div>
+        )}
+        {step === 1 &&
+          (typeId !== "chair" ? (
+            <div>
+              <div className="calc-big">{width} мм</div>
+              <input
+                className="calc-range"
+                type="range"
+                min={1200}
+                max={3200}
+                step={50}
+                value={width}
+                onChange={(e) => setWidth(+e.target.value)}
+              />
+              <p className="calc-hint">Ширина изделия по передней спинке</p>
+            </div>
+          ) : (
+            <p className="calc-hint">
+              Для стульев размер не важен — считаем по типовой норме.
+            </p>
+          ))}
+        {step === 2 && (
+          <div className="calc-chips">
+            {CALC.mechanisms.map((m) => (
+              <button
+                key={m.id}
+                className={chip(mechId === m.id)}
+                onClick={() => setMechId(m.id)}
+              >
+                {m.name}
+              </button>
+            ))}
+          </div>
+        )}
+        {step === 3 && (
+          <div className="calc-chips">
+            <span className="calc-stepper">
+              Спинки{" "}
+              <button onClick={() => setBack(Math.max(0, back - 1))}>−</button>
+              <b>{back}</b>
+              <button onClick={() => setBack(back + 1)}>+</button>
+            </span>
+            <span className="calc-stepper">
+              Сиденья{" "}
+              <button onClick={() => setSeat(Math.max(0, seat - 1))}>−</button>
+              <b>{seat}</b>
+              <button onClick={() => setSeat(seat + 1)}>+</button>
+            </span>
+            <button className={chip(tuft)} onClick={() => setTuft(!tuft)}>
+              Каретная стяжка ×1,5
+            </button>
+          </div>
+        )}
+        {step === 4 && (
+          <div className="calc-chips">
+            {CALC.finishes.map((f) => (
+              <button
+                key={f.id}
+                className={chip(fins.includes(f.id))}
+                onClick={() => toggle(fins, f.id, setFins)}
+              >
+                {f.name} +{f.price.toLocaleString("ru-RU")} ₽
+              </button>
+            ))}
+            {CALC.repairs.map((r) => (
+              <button
+                key={r.id}
+                className={chip(reps.includes(r.id))}
+                onClick={() => toggle(reps, r.id, setReps)}
+              >
+                {r.name} +{r.price.toLocaleString("ru-RU")} ₽
+              </button>
+            ))}
+          </div>
+        )}
+        {step === 5 && (
+          <div className="calc-chips">
+            {CALC.materials.map((m) => (
+              <button
+                key={m.id}
+                className={chip(matId === m.id)}
+                onClick={() => setMatId(m.id)}
+              >
+                {m.name}
+                {m.rate ? ` · ${m.rate.toLocaleString("ru-RU")} ₽/м` : ""}
+              </button>
+            ))}
+          </div>
+        )}
+        {step === 6 && (
+          <div className="calc-send">
+            <input
+              className="lm-input"
+              placeholder="Ваше имя"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+            <input
+              className="lm-input"
+              placeholder="Телефон"
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+            />
+            <label className="lm-file">
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                hidden
+                onChange={(e) =>
+                  setPhotos(Array.from(e.target.files || []).slice(0, 3))
+                }
+              />
+              {photos.length
+                ? `📎 Фото прикреплено: ${photos.length}`
+                : "📎 Прикрепить фото мебели (до 3 шт)"}
+            </label>
+            <input
+              className="lm-hp"
+              tabIndex={-1}
+              autoComplete="off"
+              value={hp}
+              onChange={(e) => setHp(e.target.value)}
+              placeholder="Не заполняйте это поле"
+            />
+          </div>
+        )}
+      </div>
+
+      <div className="calc-foot">
         <button
-          className="btn btn-primary"
-          onClick={send}
-          disabled={!phone || sent}
+          className="calc-nav"
+          disabled={step === 0}
+          onClick={() => setStep(step - 1)}
         >
-          {sent ? "Расчёт отправлен мастеру ✓" : "Отправить расчёт мастеру →"}
+          ← Назад
         </button>
+        <div className="calc-total">
+          <small>Предварительно</small>
+          <b>от {total.toLocaleString("ru-RU")} ₽</b>
+        </div>
+        {step < 6 ? (
+          <button className="calc-nav next" onClick={() => setStep(step + 1)}>
+            Далее →
+          </button>
+        ) : (
+          <button
+            className="calc-nav next"
+            onClick={send}
+            disabled={!phone || sent}
+          >
+            {sent ? "Отправлено ✓" : "Отправить →"}
+          </button>
+        )}
       </div>
     </div>
   );
 }
 
 // ────────────────────────────────────────────────────────────
-// FAB: 4 контакта (VK, TG, MAX, телефон), БЕЗ чата
+// FAB: MAX первым (акцент), TG, VK, телефон
 // ────────────────────────────────────────────────────────────
 
 function ContactFab() {
@@ -592,65 +667,25 @@ function ContactFab() {
     return () => clearInterval(t);
   }, [open]);
 
-  const svg = (d: React.ReactNode, size = 22) => (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      {d}
-    </svg>
-  );
-
-  const phonePath = (
-    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" />
-  );
-  const tgPath = <path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" />;
-
   const main = [
-    { title: "Telegram", bg: "#0088CC", icon: svg(tgPath) },
     {
       title: "MAX",
       bg: "#7A5AF8",
       icon: <span style={{ fontWeight: 800, fontSize: 13 }}>MAX</span>,
     },
+    { title: "Позвонить", bg: "#FF6B00", icon: svgIcon(PHONE_PATH) },
+    { title: "Telegram", bg: "#0088CC", icon: svgIcon(TG_PATH) },
     {
       title: "ВКонтакте",
       bg: "#4A76A8",
       icon: <span style={{ fontWeight: 800, fontSize: 12 }}>VK</span>,
     },
-    { title: "Позвонить", bg: "#FF6B00", icon: svg(phonePath) },
   ];
   const s = main[i];
 
   return (
     <div className={`cfab ${open ? "cfab-open" : ""}`}>
       <div className="cfab-menu">
-        <a
-          className="cfab-item"
-          style={{ background: "#4A76A8" }}
-          title="Мы во ВКонтакте"
-          href="https://vk.ru/dnr_peretyajka_mebeli"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <span style={{ fontWeight: 800, fontSize: 12 }}>VK</span>
-        </a>
-        <a
-          className="cfab-item"
-          style={{ background: "#0088CC" }}
-          title="Telegram"
-          href="https://t.me/dnr_peretyajka_mebeli"
-          target="_blank"
-          rel="noreferrer"
-        >
-          {svg(tgPath, 18)}
-        </a>
         <a
           className="cfab-item"
           style={{ background: "#7A5AF8" }}
@@ -663,11 +698,31 @@ function ContactFab() {
         </a>
         <a
           className="cfab-item"
+          style={{ background: "#0088CC" }}
+          title="Telegram"
+          href="https://t.me/dnr_peretyajka_mebeli"
+          target="_blank"
+          rel="noreferrer"
+        >
+          {svgIcon(TG_PATH, 18)}
+        </a>
+        <a
+          className="cfab-item"
+          style={{ background: "#4A76A8" }}
+          title="Мы во ВКонтакте"
+          href="https://vk.ru/dnr_peretyajka_mebeli"
+          target="_blank"
+          rel="noreferrer"
+        >
+          <span style={{ fontWeight: 800, fontSize: 12 }}>VK</span>
+        </a>
+        <a
+          className="cfab-item"
           style={{ background: "#FF6B00" }}
-          title="+7 949 098-35-32"
+          title="Позвонить"
           href="tel:+79490983532"
         >
-          {svg(phonePath, 18)}
+          {svgIcon(PHONE_PATH, 18)}
         </a>
       </div>
       <button
@@ -731,7 +786,15 @@ function Home() {
         </nav>
         <div className="header-cta">
           <a
-            className="btn btn-ghost"
+            className="btn btn-primary btn-sm"
+            href="https://max.ru/channel_peretyajka"
+            target="_blank"
+            rel="noreferrer"
+          >
+            MAX
+          </a>
+          <a
+            className="btn btn-ghost btn-sm"
             href="https://t.me/dnr_peretyajka_mebeli"
             target="_blank"
             rel="noreferrer"
@@ -748,15 +811,10 @@ function Home() {
         </div>
       </header>
 
-      {/* HERO */}
+      {/* HERO: текст слева, фото справа */}
       <section className="hero">
-        <img
-          className="hero-img"
-          src="/works/hero.jpg"
-          alt="Мастер за работой"
-        />
         <div className="hero-inner">
-          <span className="hero-tag">Перетяжка мебели в ДНР</span>
+          <span className="hero-tag">ДНР · Донецк · Макеевка</span>
           <h1>
             Ваш диван станет <span className="accent">лучше нового</span>
           </h1>
@@ -772,10 +830,33 @@ function Home() {
               Рассчитать стоимость
             </button>
             <a className="btn btn-ghost" href="tel:+79490983532">
-              +7 949 098-35-32
+              {svgIcon(PHONE_PATH, 18)} Позвонить
             </a>
           </div>
+          <p className="hero-mess">
+            Быстрее в мессенджерах:{" "}
+            <a
+              href="https://max.ru/channel_peretyajka"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <b>MAX</b>
+            </a>{" "}
+            ·{" "}
+            <a
+              href="https://t.me/dnr_peretyajka_mebeli"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Telegram
+            </a>
+          </p>
         </div>
+        <img
+          className="hero-img"
+          src="/works/hero.jpg"
+          alt="Мастер за работой"
+        />
       </section>
 
       {/* УСЛУГИ */}
@@ -829,7 +910,7 @@ function Home() {
         <div style={{ textAlign: "center", marginTop: 24 }}>
           <a
             className="btn btn-primary"
-            href="https://t.me/dnr_peretyajka_mebeli"
+            href="https://max.ru/channel_peretyajka"
             target="_blank"
             rel="noreferrer"
           >
@@ -870,17 +951,17 @@ function Home() {
       </section>
 
       {/* КАЛЬКУЛЯТОР */}
-      <section id="calc" className="section" style={{ background: "#F7F6F3" }}>
+      <section id="calc" className="section">
         <h2 className="section-title">Рассчитайте стоимость за минуту</h2>
         <p className="section-sub">
-          Честная формула: работа считается по расходу ткани, материал — по
-          категории. Без скрытых «+» в конце.
+          Семь шагов — и вы видите честную формулу: работа по расходу ткани,
+          материал по категории.
         </p>
         <Calculator />
       </section>
 
       {/* ДО / ПОСЛЕ */}
-      <section className="section" id="works">
+      <section className="section" id="works" style={{ background: "#fff" }}>
         <h2 className="section-title">До и после</h2>
         <p className="section-sub">
           Потяните ползунок или просто наблюдайте — он дышит сам.
@@ -895,7 +976,7 @@ function Home() {
       </section>
 
       {/* ПРОЦЕСС */}
-      <section id="process" className="section" style={{ background: "#fff" }}>
+      <section id="process" className="section">
         <h2 className="section-title">Как мы работаем</h2>
         <div className="process-grid">
           {[
@@ -940,13 +1021,13 @@ function Home() {
       </section>
 
       {/* FAQ */}
-      <section className="section" id="faq">
+      <section className="section" id="faq" style={{ background: "#fff" }}>
         <h2 className="section-title">Частые вопросы</h2>
         <div className="faq-list">
           {[
             {
               q: "Сколько стоит перетяжка?",
-              a: "Стул от 2 000 ₽, кресло от 9 000 ₽, диван от 11 000 ₽. Точную цену назовём по фото или замере.",
+              a: "Стул от 3 000 ₽, кресло от 15 000 ₽, диван от 25 000 ₽. Точную цену назовём по фото или замере.",
             },
             {
               q: "Можно ли своей тканью?",
@@ -973,46 +1054,67 @@ function Home() {
         </div>
       </section>
 
-      {/* КОНТАКТЫ */}
-      <section className="section contacts" id="contacts">
-        <h2 className="section-title" style={{ color: "#fff" }}>
-          Связаться с нами
-        </h2>
-        <div className="contacts-grid">
+      {/* ПОДВАЛ */}
+      <footer className="footer" id="contacts">
+        <div className="footer-grid">
           <div>
-            <div className="contacts-label">Телефон</div>
-            <a href="tel:+79490983532" className="contacts-value">
-              +7 949 098-35-32
-            </a>
+            <div className="logo light">
+              <span>SOFONIYA</span>
+              <small>реставрация мебели</small>
+            </div>
+            <p className="footer-tag">
+              Вторая жизнь вашей мебели за 7 дней. Донецк, Макеевка и весь
+              регион ДНР.
+            </p>
+            <div className="socials">
+              <a
+                className="soc soc-max"
+                href="https://max.ru/channel_peretyajka"
+                target="_blank"
+                rel="noreferrer"
+                title="MAX"
+              >
+                MAX
+              </a>
+              <a
+                className="soc soc-tg"
+                href="https://t.me/dnr_peretyajka_mebeli"
+                target="_blank"
+                rel="noreferrer"
+                title="Telegram"
+              >
+                {svgIcon(TG_PATH, 18)}
+              </a>
+              <a
+                className="soc soc-vk"
+                href="https://vk.ru/dnr_peretyajka_mebeli"
+                target="_blank"
+                rel="noreferrer"
+                title="ВКонтакте"
+              >
+                VK
+              </a>
+            </div>
           </div>
+          <nav className="footer-nav">
+            <h4>Разделы</h4>
+            <button onClick={() => go("services")}>Услуги</button>
+            <button onClick={() => go("fabrics")}>Ткани</button>
+            <button onClick={() => go("calc")}>Калькулятор</button>
+            <button onClick={() => go("works")}>Работы</button>
+            <button onClick={() => go("faq")}>Вопросы</button>
+          </nav>
           <div>
-            <div className="contacts-label">Telegram</div>
-            <a
-              href="https://t.me/dnr_peretyajka_mebeli"
-              target="_blank"
-              rel="noreferrer"
-              className="contacts-value"
-            >
-              @dnr_peretyajka_mebeli
-            </a>
-          </div>
-          <div>
-            <div className="contacts-label">Соцсети</div>
-            <a
-              href="https://vk.ru/dnr_peretyajka_mebeli"
-              target="_blank"
-              rel="noreferrer"
-              className="contacts-value"
-            >
-              ВКонтакте
-            </a>
+            <h4>Связаться</h4>
+            <MaskedPhone />
+            <p className="footer-note">
+              Звоните 9:00–19:00 или пишите в мессенджеры — ответим за 15 минут.
+            </p>
           </div>
         </div>
-      </section>
-
-      {/* ФУТЕР */}
-      <footer className="footer">
-        © {new Date().getFullYear()} SOFONIYA · Перетяжка мебели в ДНР
+        <div className="footer-bottom">
+          © {new Date().getFullYear()} SOFONIYA · Перетяжка мебели в ДНР
+        </div>
       </footer>
 
       {/* FAB */}
@@ -1067,7 +1169,7 @@ function TypePage() {
         <div style={{ textAlign: "center", marginTop: 32 }}>
           <a
             className="btn btn-primary"
-            href="https://t.me/dnr_peretyajka_mebeli"
+            href="https://max.ru/channel_peretyajka"
             target="_blank"
             rel="noreferrer"
           >
@@ -1134,7 +1236,7 @@ function CollectionPage() {
         <div style={{ textAlign: "center", marginTop: 32 }}>
           <a
             className="btn btn-primary"
-            href="https://t.me/dnr_peretyajka_mebeli"
+            href="https://max.ru/channel_peretyajka"
             target="_blank"
             rel="noreferrer"
           >
