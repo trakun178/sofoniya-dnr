@@ -10,8 +10,8 @@ import type { FabricType, Collection } from "./data/catalog";
 const TG_BOT_TOKEN = import.meta.env.VITE_TG_BOT_TOKEN as string;
 const TG_CHAT_ID = import.meta.env.VITE_TG_CHAT_ID as string;
 
-// Впиши свою почту: на неё придёт письмо-активация FormSubmit при ПЕРВОЙ заявке — кликни ссылку один раз
-const EMAIL_TO = "ВСТАВЬ_СВОЮ_ПОЧТУ";
+// Впиши свою почту: придёт письмо-активация FormSubmit при ПЕРВОЙ заявке — кликни ссылку один раз
+const EMAIL_TO = "trakun178@yandex.ru";
 
 const LEGAL = {
   name: "ИП Тракун Д.М.",
@@ -41,6 +41,25 @@ function svgIcon(d: React.ReactNode, size = 22) {
       {d}
     </svg>
   );
+}
+
+// Появление блоков при скролле
+function useReveal() {
+  useEffect(() => {
+    const els = document.querySelectorAll(".rev");
+    const io = new IntersectionObserver(
+      (es) =>
+        es.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add("on");
+            io.unobserve(e.target);
+          }
+        }),
+      { threshold: 0.12 },
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
 }
 
 async function sendToTelegram(data: {
@@ -96,7 +115,7 @@ async function sendLead(data: {
   try {
     await sendToTelegram(data);
   } catch {
-    await sendEmailFallback(data); // TG недоступен в ДНР — уходит на почту
+    await sendEmailFallback(data);
   }
 }
 
@@ -114,7 +133,7 @@ async function sendPhotosToTelegram(files: File[], caption: string) {
 }
 
 // ────────────────────────────────────────────────────────────
-// ЭКОНОМИКА: работа фикс за тип (цены владельца), материал по категориям
+// ЭКОНОМИКА: работа фикс за тип, материал по категориям
 // ────────────────────────────────────────────────────────────
 
 const CALC = {
@@ -283,7 +302,7 @@ function MaskedPhone() {
 }
 
 // ────────────────────────────────────────────────────────────
-// LEAD-МОДАЛКА (фото + антиспам + двойной канал отправки)
+// LEAD-МОДАЛКА
 // ────────────────────────────────────────────────────────────
 
 function LeadModal({
@@ -424,7 +443,7 @@ function LeadModal({
 }
 
 // ────────────────────────────────────────────────────────────
-// КАЛЬКУЛЯТОР-WIZARD (базовые цены владельца)
+// КАЛЬКУЛЯТОР-WIZARD
 // ────────────────────────────────────────────────────────────
 
 function Calculator() {
@@ -510,7 +529,7 @@ function Calculator() {
   const chip = (on: boolean) => "calc-chip" + (on ? " on" : "");
 
   return (
-    <div className="calc">
+    <div className="calc rev">
       <div className="calc-progress">
         {steps.map((s, i) => (
           <button
@@ -801,6 +820,7 @@ function ContactFab() {
 function Home() {
   const [modal, setModal] = useState<string | null>(null);
   const [navOpen, setNavOpen] = useState(false);
+  useReveal();
 
   const go = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
@@ -924,7 +944,7 @@ function Home() {
           </p>
           <div className="hero-btns">
             <button
-              className="btn btn-primary"
+              className="btn btn-primary glow"
               onClick={() => setModal("Рассчитать стоимость")}
             >
               Рассчитать стоимость
@@ -934,13 +954,13 @@ function Home() {
             </a>
           </div>
           <div className="stamps">
-            <span className="stamp">
+            <span className="stamp r1">
               <b>7</b> дней срок
             </span>
-            <span className="stamp">
+            <span className="stamp r2">
               <b>2</b> года гарантия
             </span>
-            <span className="stamp">
+            <span className="stamp r1">
               <b>0 ₽</b> вывоз и доставка
             </span>
           </div>
@@ -962,14 +982,14 @@ function Home() {
 
       {/* УСЛУГИ */}
       <section className="section" id="services">
-        <div className="section-head">
-          <span className="overline">01 · Услуги</span>
+        <div className="section-head rev" data-num="01">
+          <span className="overline">Услуги</span>
           <h2>Что мы перетягиваем</h2>
         </div>
         <div className="rows">
           {SERVICES.map((s, i) => (
             <button
-              className="row"
+              className="row rev"
               key={s.name}
               onClick={() => setModal(s.name)}
             >
@@ -983,10 +1003,10 @@ function Home() {
         </div>
       </section>
 
-      {/* ТКАНИ: компактная сетка */}
+      {/* ТКАНИ */}
       <section className="section" id="fabrics">
-        <div className="section-head">
-          <span className="overline">02 · Материалы</span>
+        <div className="section-head rev" data-num="02">
+          <span className="overline">Материалы</span>
           <h2>Атлас тканей</h2>
           <p className="section-sub">
             Структура каждого материала — под увеличением. Нажмите на круг,
@@ -995,7 +1015,7 @@ function Home() {
         </div>
         <div className="fabric-grid">
           {CATALOG.map((f) => (
-            <Link to={`/t/${f.id}`} className="swatch" key={f.id}>
+            <Link to={`/t/${f.id}`} className="swatch rev" key={f.id}>
               <span className={`sw ${f.cls}`}>
                 <img
                   src="/sketches/weave.jpg"
@@ -1028,10 +1048,10 @@ function Home() {
         </div>
       </section>
 
-      {/* ВИТРИНА: компактные карточки */}
+      {/* ВИТРИНА */}
       <section className="section" id="collections">
-        <div className="section-head">
-          <span className="overline">03 · Коллекции</span>
+        <div className="section-head rev" data-num="03">
+          <span className="overline">Коллекции</span>
           <h2>Витрина коллекций</h2>
           <p className="section-sub">
             По одной представительной коллекции от каждого типа материала.
@@ -1041,7 +1061,11 @@ function Home() {
           {CATALOG.filter((t) => t.collections.length > 0).map((t) => {
             const c = t.collections[0];
             return (
-              <Link className="show-card" key={t.id} to={`/t/${t.id}/${c.id}`}>
+              <Link
+                className="show-card rev"
+                key={t.id}
+                to={`/t/${t.id}/${c.id}`}
+              >
                 <CoverImg t={t} c={c} />
                 <span className="show-body">
                   <b>{c.name}</b>
@@ -1059,8 +1083,8 @@ function Home() {
 
       {/* КАЛЬКУЛЯТОР */}
       <section className="section" id="calc">
-        <div className="section-head">
-          <span className="overline">04 · Калькулятор</span>
+        <div className="section-head rev" data-num="04">
+          <span className="overline">Калькулятор</span>
           <h2>Стоимость за минуту</h2>
           <p className="section-sub">
             Работа — фикс за тип мебели. Материал — по категории, своей тканью —
@@ -1072,14 +1096,14 @@ function Home() {
 
       {/* ДО / ПОСЛЕ */}
       <section className="section" id="works">
-        <div className="section-head">
-          <span className="overline">05 · Работы</span>
+        <div className="section-head rev" data-num="05">
+          <span className="overline">Работы</span>
           <h2>До и после</h2>
           <p className="section-sub">
             Потяните ползунок или наблюдайте — он дышит сам.
           </p>
         </div>
-        <div className="aba-wrap">
+        <div className="aba-wrap rev">
           <AutoBeforeAfter
             before="/works/before.jpg"
             after="/works/after.jpg"
@@ -1090,8 +1114,8 @@ function Home() {
 
       {/* ПРОЦЕСС */}
       <section className="section" id="process">
-        <div className="section-head">
-          <span className="overline">06 · Процесс</span>
+        <div className="section-head rev" data-num="06">
+          <span className="overline">Процесс</span>
           <h2>Как мы работаем</h2>
         </div>
         <div className="process-grid">
@@ -1127,7 +1151,7 @@ function Home() {
               d: "Привозим обратно и выдаём гарантию",
             },
           ].map((s) => (
-            <div className="process-card" key={s.n}>
+            <div className="process-card rev" key={s.n}>
               <div className="process-num">{s.n}</div>
               <h3>{s.t}</h3>
               <p>{s.d}</p>
@@ -1139,8 +1163,8 @@ function Home() {
       {/* FAQ */}
       <section className="section" id="faq">
         <div className="faq-wrap">
-          <div className="faq-left">
-            <span className="overline">07 · Вопросы</span>
+          <div className="faq-left rev">
+            <span className="overline">Вопросы</span>
             <h2>Частые вопросы</h2>
             <p className="section-sub" style={{ textAlign: "left", margin: 0 }}>
               Не нашли ответ — напишите в MAX, ответим за 15 минут.
@@ -1169,7 +1193,7 @@ function Home() {
                 a: "Да, вывоз и доставка обратно — бесплатно по Донецку и Макеевке.",
               },
             ].map((f, i) => (
-              <details className="faq-item" key={i}>
+              <details className="faq-item rev" key={i}>
                 <summary>{f.q}</summary>
                 <p>{f.a}</p>
               </details>
