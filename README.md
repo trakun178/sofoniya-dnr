@@ -4,7 +4,7 @@
 
 ## 🌐 Онлайн
 
-- Сайт: [sofoniya-dnr.vercel.app](https://peretyazhka.sofoniya.ru/)
+- Сайт: [peretyazhka.sofoniya.ru](https://peretyazhka.sofoniya.ru/)
 - Telegram: [@dnr_peretyajka_mebeli](https://t.me/dnr_peretyajka_mebeli)
 - VK: [vk.ru/dnr_peretyajka_mebeli](https://vk.ru/dnr_peretyajka_mebeli)
 - MAX: [max.ru/channel_peretyajka](https://max.ru/channel_peretyajka)
