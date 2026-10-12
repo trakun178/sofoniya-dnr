@@ -120,16 +120,35 @@ async function sendLead(data: {
 }
 
 async function sendPhotosToTelegram(files: File[], caption: string) {
-  for (const f of files) {
+  if (!files.length) return;
+
+  // Одно фото — обычным sendPhoto с подписью
+  if (files.length === 1) {
     const fd = new FormData();
     fd.append("chat_id", TG_CHAT_ID);
     fd.append("caption", caption);
-    fd.append("photo", f);
+    fd.append("photo", files[0], "photo.jpg");
     await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendPhoto`, {
       method: "POST",
       body: fd,
     });
+    return;
   }
+
+  // 2–3 фото — одним альбомом (media group)
+  const fd = new FormData();
+  const media = files.map((f, i) => ({
+    type: "photo",
+    media: `attach://photo${i}`,
+    ...(i === 0 ? { caption, parse_mode: "HTML" } : {}),
+  }));
+  fd.append("chat_id", TG_CHAT_ID);
+  fd.append("media", JSON.stringify(media));
+  files.forEach((f, i) => fd.append(`photo${i}`, f, `photo${i}.jpg`));
+  await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMediaGroup`, {
+    method: "POST",
+    body: fd,
+  });
 }
 
 // ────────────────────────────────────────────────────────────
