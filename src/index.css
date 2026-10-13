@@ -1649,3 +1649,24 @@ video {
     max-height: none;
   }
 }
+/* ═══ ДО/ПОСЛЕ: портретная рамка под вертикальные фото ═══ */
+.aba-wrap {
+  width: fit-content; /* рамка обтягивает слайдер, белого поля больше нет */
+  max-width: 100%;
+  margin: 0 auto;
+}
+.aba {
+  height: min(76vh, 860px); /* высота ограничена — страница не растягивается */
+  width: auto;
+  aspect-ratio: 3 / 4; /* пропорция ваших вертикальных фото — без обрезки краёв */
+  max-width: 100%;
+}
+.aba-img,
+.aba img {
+  object-position: center center;
+}
+@media (max-width: 640px) {
+  .aba {
+    height: min(70vh, 560px);
+  }
+}
