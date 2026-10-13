@@ -124,19 +124,20 @@ async function sendEmailFallback(data: LeadData) {
   if (!r.ok) throw new Error("email send failed");
 }
 
-async function sendLead(data: LeadData) {
+async function sendLead(data: {
+  name: string;
+  phone: string;
+  comment: string;
+  service: string;
+}) {
   try {
     await sendViaWorker(data);
     return;
-  } catch {
-    /* воркер недоступен */
-  }
+  } catch {}
   try {
     await sendToTelegram(data);
     return;
-  } catch {
-    /* TG заблокирован */
-  }
+  } catch {}
   await sendEmailFallback(data);
 }
 
