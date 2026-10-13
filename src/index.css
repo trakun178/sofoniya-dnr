@@ -1605,3 +1605,30 @@ button {
     padding: 40px 20px;
   }
 }
+/* ═══ ДО/ПОСЛЕ: шире и ниже, целиком в экране ═══ */
+.works-grid {
+  grid-template-columns: minmax(360px, 780px) 1fr;
+  gap: 40px;
+}
+.aba-wrap {
+  max-width: 780px;
+}
+.aba {
+  aspect-ratio: auto; /* пропорцию диктует высота, а не наоборот */
+  height: min(62vh, 620px); /* не выше 62% экрана — ничего не обрезается */
+  width: 100%;
+  max-height: none;
+}
+@media (max-width: 960px) {
+  .works-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .aba-wrap {
+    max-width: 560px;
+    margin: 0 auto;
+  }
+  .aba {
+    height: min(52vh, 480px);
+  }
+}
