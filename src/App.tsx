@@ -1124,19 +1124,41 @@ function Home() {
 
       {/* ДО / ПОСЛЕ */}
       <section className="section" id="works">
-        <div className="section-head rev" data-num="05">
+        <div className="section-head" data-num="05">
           <span className="overline">Работы</span>
           <h2>До и после</h2>
           <p className="section-sub">
             Потяните ползунок или наблюдайте — он дышит сам.
           </p>
         </div>
-        <div className="aba-wrap rev">
-          <AutoBeforeAfter
-            before="/works/before.jpg"
-            after="/works/after.jpg"
-            alt="Перетяжка дивана: до и после"
-          />
+        <div className="works-grid">
+          <div className="aba-wrap">
+            <AutoBeforeAfter
+              before="/works/before.jpg"
+              after="/works/after.jpg"
+              alt="Перетяжка изголовья: до и после"
+            />
+          </div>
+          <div className="works-story">
+            <h3>Изголовье кровати, каретная стяжка</h3>
+            <p>
+              Хозяйка думала выбросить: стяжка просела, ткань выцвела и местами
+              отклеилась. Мы сохранили родной каркас и форму — заменили всё
+              остальное.
+            </p>
+            <ul className="works-list">
+              <li>Демонтаж старой обивки и пуговиц</li>
+              <li>Новый поролон, перетяжка утяжек по ромбам</li>
+              <li>Экокожа премиум, пуговицы в тон</li>
+              <li>Срок 9 дней · гарантия 1 год</li>
+            </ul>
+            <button
+              className="btn btn-primary"
+              onClick={() => setModal("Перетяжка изголовья")}
+            >
+              Хочу так же
+            </button>
+          </div>
         </div>
       </section>
 
