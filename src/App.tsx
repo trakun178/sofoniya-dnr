@@ -10,7 +10,10 @@ import type { FabricType, Collection } from "./data/catalog";
 const TG_BOT_TOKEN = import.meta.env.VITE_TG_BOT_TOKEN as string;
 const TG_CHAT_ID = import.meta.env.VITE_TG_CHAT_ID as string;
 
-// Впиши свою почту: придёт письмо-активация FormSubmit при ПЕРВОЙ заявке — кликни ссылку один раз
+// Воркер Cloudflare: бьёт в Telegram и в Resend (почта). Секреты живут в воркере.
+const LEADS_WORKER = "https://sofoniya-leads.dnrsabbath.workers.dev";
+
+// Запасной почтовый канал напрямую (FormSubmit), если воркер и TG недоступны
 const EMAIL_TO = "trakun178@yandex.ru";
 
 const LEGAL = {
@@ -19,6 +22,12 @@ const LEGAL = {
   inn: "101102624468",
   address: "ДНР, г. Донецк — адрес производства уточняется по телефону",
   mapSrc: "https://yandex.ru/map-widget/v1/?ll=37.804662%2C48.007367&z=12",
+};
+
+const LINKS = {
+  tg: "https://t.me/dnr_peretyajka_mebeli?direct",
+  max: "https://max.ru/u/f9LHodD0cOIb2Tv0HZyO-NRT9UJWPvPj8e-2REW_Cnq5XCVdNIjvwyM0Otk",
+  vk: "https://vk.ru/gim226964069?entrypoint=community_page",
 };
 
 const PHONE_PATH = (
@@ -62,12 +71,27 @@ function useReveal() {
   }, []);
 }
 
-async function sendToTelegram(data: {
+// ────────────────────────────────────────────────────────────
+// КАНАЛЫ ОТПРАВКИ: воркер → прямой TG → почта FormSubmit
+// ────────────────────────────────────────────────────────────
+
+type LeadData = {
   name: string;
   phone: string;
   comment: string;
   service: string;
-}) {
+};
+
+async function sendViaWorker(data: LeadData) {
+  const r = await fetch(LEADS_WORKER, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!r.ok) throw new Error("worker fail");
+}
+
+async function sendToTelegram(data: LeadData) {
   const text =
     `🛋 <b>Новая заявка с сайта!</b>\n` +
     `Услуга: ${data.service}\n` +
@@ -86,13 +110,7 @@ async function sendToTelegram(data: {
   if (!r.ok) throw new Error("TG send failed");
 }
 
-async function sendEmailFallback(data: {
-  name: string;
-  phone: string;
-  comment: string;
-  service: string;
-}) {
-  if (EMAIL_TO.includes("ВСТАВЬ")) throw new Error("email not configured");
+async function sendEmailFallback(data: LeadData) {
   const r = await fetch(`https://formsubmit.co/ajax/${EMAIL_TO}`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -106,23 +124,24 @@ async function sendEmailFallback(data: {
   if (!r.ok) throw new Error("email send failed");
 }
 
-async function sendLead(data: {
-  name: string;
-  phone: string;
-  comment: string;
-  service: string;
-}) {
+async function sendLead(data: LeadData) {
+  try {
+    await sendViaWorker(data);
+    return;
+  } catch {
+    /* воркер недоступен */
+  }
   try {
     await sendToTelegram(data);
+    return;
   } catch {
-    await sendEmailFallback(data);
+    /* TG заблокирован */
   }
+  await sendEmailFallback(data);
 }
 
 async function sendPhotosToTelegram(files: File[], caption: string) {
   if (!files.length) return;
-
-  // Одно фото — обычным sendPhoto с подписью
   if (files.length === 1) {
     const fd = new FormData();
     fd.append("chat_id", TG_CHAT_ID);
@@ -134,8 +153,6 @@ async function sendPhotosToTelegram(files: File[], caption: string) {
     });
     return;
   }
-
-  // 2–3 фото — одним альбомом (media group)
   const fd = new FormData();
   const media = files.map((f, i) => ({
     type: "photo",
@@ -321,7 +338,7 @@ function MaskedPhone() {
 }
 
 // ────────────────────────────────────────────────────────────
-// LEAD-МОДАЛКА
+// LEAD-МОДАЛКА (фото + антиспам)
 // ────────────────────────────────────────────────────────────
 
 function LeadModal({
@@ -343,7 +360,7 @@ function LeadModal({
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (hp.trim() !== "" || Date.now() - openedAt.current < 4000) {
+    if (hp.trim() !== "" || Date.now() - openedAt.current < 1500) {
       setState("done");
       return;
     }
@@ -432,19 +449,11 @@ function LeadModal({
               {state === "error" && (
                 <p className="lm-error">
                   Не удалось отправить. Позвоните мастеру или напишите в{" "}
-                  <a
-                    href="https://max.ru/u/f9LHodD0cOIb2Tv0HZyO-NRT9UJWPvPj8e-2REW_Cnq5XCVdNIjvwyM0Otk"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
+                  <a href={LINKS.max} target="_blank" rel="noreferrer">
                     MAX
                   </a>{" "}
                   /{" "}
-                  <a
-                    href="https://t.me/dnr_peretyajka_mebeli?direct"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
+                  <a href={LINKS.tg} target="_blank" rel="noreferrer">
                     Telegram
                   </a>
                   .
@@ -523,7 +532,7 @@ function Calculator() {
     `ремонт: ${reps.map((i) => CALC.repairs.find((r) => r.id === i)!.name).join(", ") || "—"}; материал: ${mat.name}; расход ≈ ${meters} м`;
 
   const send = async () => {
-    if (hp.trim() !== "" || Date.now() - openedAt.current < 4000) {
+    if (hp.trim() !== "" || Date.now() - openedAt.current < 1500) {
       setSent(true);
       return;
     }
@@ -785,7 +794,7 @@ function ContactFab() {
           className="cfab-item"
           style={{ background: "#7A5AF8" }}
           title="MAX"
-          href="https://max.ru/u/f9LHodD0cOIb2Tv0HZyO-NRT9UJWPvPj8e-2REW_Cnq5XCVdNIjvwyM0Otk"
+          href={LINKS.max}
           target="_blank"
           rel="noreferrer"
         >
@@ -795,7 +804,7 @@ function ContactFab() {
           className="cfab-item"
           style={{ background: "#0088CC" }}
           title="Telegram"
-          href="https://t.me/dnr_peretyajka_mebeli?direct"
+          href={LINKS.tg}
           target="_blank"
           rel="noreferrer"
         >
@@ -805,7 +814,7 @@ function ContactFab() {
           className="cfab-item"
           style={{ background: "#4A76A8" }}
           title="Мы во ВКонтакте"
-          href="https://vk.ru/gim226964069?entrypoint=community_page"
+          href={LINKS.vk}
           target="_blank"
           rel="noreferrer"
         >
@@ -892,7 +901,7 @@ function Home() {
 
   return (
     <>
-      {/* БЕГУЩАЯ СТРОКА — САМЫЙ ВЕРХ */}
+      {/* БЕГУЩАЯ СТРОКА */}
       <div className="marquee" aria-hidden="true">
         <div className="marquee-track">
           {[...MARQUEE, ...MARQUEE].map((m, i) => (
@@ -927,7 +936,7 @@ function Home() {
         <div className="header-cta">
           <a
             className="btn btn-primary btn-sm"
-            href="https://max.ru/u/f9LHodD0cOIb2Tv0HZyO-NRT9UJWPvPj8e-2REW_Cnq5XCVdNIjvwyM0Otk"
+            href={LINKS.max}
             target="_blank"
             rel="noreferrer"
           >
@@ -935,7 +944,7 @@ function Home() {
           </a>
           <a
             className="btn btn-ghost btn-sm"
-            href="https://t.me/dnr_peretyajka_mebeli?direct?direct"
+            href={LINKS.tg}
             target="_blank"
             rel="noreferrer"
           >
@@ -1067,7 +1076,7 @@ function Home() {
         <div style={{ textAlign: "center", marginTop: 28 }}>
           <a
             className="btn btn-primary"
-            href="https://max.ru/u/f9LHodD0cOIb2Tv0HZyO-NRT9UJWPvPj8e-2REW_Cnq5XCVdNIjvwyM0Otk"
+            href={LINKS.max}
             target="_blank"
             rel="noreferrer"
           >
@@ -1124,7 +1133,7 @@ function Home() {
 
       {/* ДО / ПОСЛЕ */}
       <section className="section" id="works">
-        <div className="section-head" data-num="05">
+        <div className="section-head rev" data-num="05">
           <span className="overline">Работы</span>
           <h2>До и после</h2>
           <p className="section-sub">
@@ -1132,14 +1141,14 @@ function Home() {
           </p>
         </div>
         <div className="works-grid">
-          <div className="aba-wrap">
+          <div className="aba-wrap rev">
             <AutoBeforeAfter
               before="/works/before.jpg"
               after="/works/after.jpg"
               alt="Перетяжка изголовья: до и после"
             />
           </div>
-          <div className="works-story">
+          <aside className="works-card rev">
             <h3>Изголовье кровати, каретная стяжка</h3>
             <p>
               Хозяйка думала выбросить: стяжка просела, ткань выцвела и местами
@@ -1158,6 +1167,37 @@ function Home() {
             >
               Хочу так же
             </button>
+          </aside>
+        </div>
+      </section>
+
+      {/* CTA: РАСЧЁТ ПО ФОТО */}
+      <section className="cta-band">
+        <div className="cta-inner">
+          <div>
+            <h2>Пришлите фото — назовём точную цену за 15 минут</h2>
+            <p>
+              Бесплатно и без обязательств. Подскажем 2–3 варианта ткани под ваш
+              бюджет.
+            </p>
+          </div>
+          <div className="cta-actions">
+            <a
+              className="btn btn-primary"
+              href={LINKS.max}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Фото в MAX
+            </a>
+            <a
+              className="btn btn-ghost"
+              href={LINKS.tg}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Фото в Telegram
+            </a>
           </div>
         </div>
       </section>
@@ -1232,7 +1272,7 @@ function Home() {
               },
               {
                 q: "Сколько времени занимает?",
-                a: "Обычно 15 дней. С каретной стяжкой и нестандартной геометрией — дольше.",
+                a: "Обычно до 15 дней. С каретной стяжкой и нестандартной геометрией — дольше.",
               },
               {
                 q: "Даёте гарантию?",
@@ -1252,7 +1292,7 @@ function Home() {
         </div>
       </section>
 
-      {/* ПОДВАЛ */}
+      {/* ПОДВАЛ (ссылки соцсетей — как договорились, не меняем) */}
       <footer className="footer" id="contacts">
         <div className="footer-grid">
           <div>
@@ -1375,7 +1415,7 @@ function TypePage() {
         <div style={{ textAlign: "center", marginTop: 32 }}>
           <a
             className="btn btn-primary"
-            href="https://max.ru/u/f9LHodD0cOIb2Tv0HZyO-NRT9UJWPvPj8e-2REW_Cnq5XCVdNIjvwyM0Otk"
+            href={LINKS.max}
             target="_blank"
             rel="noreferrer"
           >
@@ -1442,7 +1482,7 @@ function CollectionPage() {
         <div style={{ textAlign: "center", marginTop: 32 }}>
           <a
             className="btn btn-primary"
-            href="https://max.ru/u/f9LHodD0cOIb2Tv0HZyO-NRT9UJWPvPj8e-2REW_Cnq5XCVdNIjvwyM0Otk"
+            href={LINKS.max}
             target="_blank"
             rel="noreferrer"
           >
