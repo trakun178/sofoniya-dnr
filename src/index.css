@@ -1582,3 +1582,70 @@ button {
     padding: 40px 20px;
   }
 }
+/* ═══ ФИКС: МЕДИА НЕ РАСТЯГИВАЕТ СТРАНИЦУ ═══ */
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+#root {
+  max-width: 100vw;
+  overflow-x: clip;
+}
+img,
+video {
+  max-width: 100%;
+}
+
+/* Hero: рамка фиксированной высоты, видео/фото прибито и обрезано по центру */
+.hero {
+  max-width: 100vw;
+}
+.hero-art {
+  position: relative;
+  overflow: hidden;
+  min-height: 420px;
+  max-height: 860px;
+}
+.hero-video,
+.hero-photo,
+.hero-art video,
+.hero-art img {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+/* До/после: рамка 4:3, кадры прибиты внутри */
+.aba-wrap {
+  max-width: 940px;
+  margin: 0 auto;
+}
+.aba {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  max-height: 78vh;
+}
+.aba-img,
+.aba img {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+/* Мобильные */
+@media (max-width: 960px) {
+  .hero-art {
+    min-height: 0;
+    height: 360px;
+    max-height: 360px;
+  }
+  .aba {
+    max-height: none;
+  }
+}
