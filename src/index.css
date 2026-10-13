@@ -370,28 +370,13 @@ button {
   height: 100%;
   object-fit: cover;
 }
-.hero-dot {
+.hero-video {
   position: absolute;
-  width: 128px;
-  height: 128px;
-  border-radius: 50%;
-  border: 4px solid #fff;
-  outline: 2px solid var(--ink);
-  overflow: hidden;
-  box-shadow: 5px 5px 0 rgba(26, 26, 46, 0.5);
-}
-.hero-dot img {
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-.hero-dot.d1 {
-  top: 8%;
-  right: 20px;
-} /* внутри экрана — без растяжения */
-.hero-dot.d2 {
-  bottom: 10%;
-  left: -36px;
+  background: #1a1a2e;
 }
 
 /* УСЛУГИ-СТРОКИ */
@@ -1368,12 +1353,6 @@ button {
     min-height: 380px;
     border-left: 0;
     border-top: 2px solid var(--ink);
-  }
-  .hero-dot.d1 {
-    right: 12px;
-  }
-  .hero-dot.d2 {
-    left: 12px;
   }
   .nav {
     display: none;

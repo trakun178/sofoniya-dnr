@@ -433,7 +433,7 @@ function LeadModal({
                 <p className="lm-error">
                   Не удалось отправить. Позвоните мастеру или напишите в{" "}
                   <a
-                    href="https://max.ru/channel_peretyajka"
+                    href="https://max.ru/u/f9LHodD0cOIb2Tv0HZyO-NRT9UJWPvPj8e-2REW_Cnq5XCVdNIjvwyM0Otk"
                     target="_blank"
                     rel="noreferrer"
                   >
@@ -441,7 +441,7 @@ function LeadModal({
                   </a>{" "}
                   /{" "}
                   <a
-                    href="https://t.me/dnr_peretyajka_mebeli"
+                    href="https://t.me/dnr_peretyajka_mebeli?direct"
                     target="_blank"
                     rel="noreferrer"
                   >
@@ -785,7 +785,7 @@ function ContactFab() {
           className="cfab-item"
           style={{ background: "#7A5AF8" }}
           title="MAX"
-          href="https://max.ru/channel_peretyajka"
+          href="https://max.ru/u/f9LHodD0cOIb2Tv0HZyO-NRT9UJWPvPj8e-2REW_Cnq5XCVdNIjvwyM0Otk"
           target="_blank"
           rel="noreferrer"
         >
@@ -795,7 +795,7 @@ function ContactFab() {
           className="cfab-item"
           style={{ background: "#0088CC" }}
           title="Telegram"
-          href="https://t.me/dnr_peretyajka_mebeli"
+          href="https://t.me/dnr_peretyajka_mebeli?direct"
           target="_blank"
           rel="noreferrer"
         >
@@ -805,7 +805,7 @@ function ContactFab() {
           className="cfab-item"
           style={{ background: "#4A76A8" }}
           title="Мы во ВКонтакте"
-          href="https://vk.ru/dnr_peretyajka_mebeli"
+          href="https://vk.ru/gim226964069?entrypoint=community_page"
           target="_blank"
           rel="noreferrer"
         >
@@ -839,6 +839,7 @@ function ContactFab() {
 function Home() {
   const [modal, setModal] = useState<string | null>(null);
   const [navOpen, setNavOpen] = useState(false);
+  const [videoOk, setVideoOk] = useState(true);
   useReveal();
 
   const go = (id: string) => {
@@ -885,7 +886,7 @@ function Home() {
     "Каретная стяжка",
     "Ремонт каркаса",
     "Бесплатный замер",
-    "Гарантия 2 года",
+    "Гарантия 1 года",
     "Донецк · Макеевка · ДНР",
   ];
 
@@ -926,7 +927,7 @@ function Home() {
         <div className="header-cta">
           <a
             className="btn btn-primary btn-sm"
-            href="https://max.ru/channel_peretyajka"
+            href="https://max.ru/u/f9LHodD0cOIb2Tv0HZyO-NRT9UJWPvPj8e-2REW_Cnq5XCVdNIjvwyM0Otk"
             target="_blank"
             rel="noreferrer"
           >
@@ -934,7 +935,7 @@ function Home() {
           </a>
           <a
             className="btn btn-ghost btn-sm"
-            href="https://t.me/dnr_peretyajka_mebeli"
+            href="https://t.me/dnr_peretyajka_mebeli?direct?direct"
             target="_blank"
             rel="noreferrer"
           >
@@ -954,12 +955,13 @@ function Home() {
       <section className="hero">
         <div className="hero-left">
           <span className="overline">ДНР · Донецк · Макеевка</span>
-          <h1>
+          <h1>Перетяжка мягкой мебели</h1>
+          <h2>
             Ваш диван станет <em>лучше нового</em>
-          </h1>
+          </h2>
           <p className="hero-lead">
-            Ателье перетяжки с собственным цехом. Фиксированная цена в договоре,
-            фабричный наполнитель, гарантия 2 года.
+            Мастерская перетяжки с собственным цехом. Фиксированная цена в
+            договоре, фабричный наполнитель, гарантия 1 год.
           </p>
           <div className="hero-btns">
             <button
@@ -974,10 +976,10 @@ function Home() {
           </div>
           <div className="stamps">
             <span className="stamp r1">
-              <b>7</b> дней срок
+              <b>15</b> дней срок
             </span>
             <span className="stamp r2">
-              <b>2</b> года гарантия
+              <b>1</b> год гарантия
             </span>
             <span className="stamp r1">
               <b>0 ₽</b> вывоз и доставка
@@ -985,17 +987,24 @@ function Home() {
           </div>
         </div>
         <div className="hero-art">
-          <img
-            className="hero-photo"
-            src="/works/hero.jpg"
-            alt="Мастер за работой"
-          />
-          <span className="hero-dot d1">
-            <img src="/sketches/natural-leather.jpg" alt="Зерно кожи" />
-          </span>
-          <span className="hero-dot d2">
-            <img src="/sketches/velour.jpg" alt="Структура велюра" />
-          </span>
+          {videoOk ? (
+            <video
+              className="hero-video"
+              src="/works/master.mp4"
+              autoPlay
+              muted
+              loop
+              playsInline
+              poster="/works/hero.jpg"
+              onError={() => setVideoOk(false)}
+            />
+          ) : (
+            <img
+              className="hero-photo"
+              src="/works/hero.jpg"
+              alt="Мастер за работой"
+            />
+          )}
         </div>
       </section>
 
@@ -1058,7 +1067,7 @@ function Home() {
         <div style={{ textAlign: "center", marginTop: 28 }}>
           <a
             className="btn btn-primary"
-            href="https://max.ru/channel_peretyajka"
+            href="https://max.ru/u/f9LHodD0cOIb2Tv0HZyO-NRT9UJWPvPj8e-2REW_Cnq5XCVdNIjvwyM0Otk"
             target="_blank"
             rel="noreferrer"
           >
@@ -1201,11 +1210,11 @@ function Home() {
               },
               {
                 q: "Сколько времени занимает?",
-                a: "Обычно 7–14 дней. С каретной стяжкой и нестандартной геометрией — дольше.",
+                a: "Обычно 15 дней. С каретной стяжкой и нестандартной геометрией — дольше.",
               },
               {
                 q: "Даёте гарантию?",
-                a: "Да, 2 года. Гарантия на работы прописывается в договоре.",
+                a: "Да, 1 года. Гарантия на работы прописывается в договоре.",
               },
               {
                 q: "Забираете и привозите мебель?",
@@ -1230,7 +1239,7 @@ function Home() {
               <small>реставрация мебели</small>
             </div>
             <p className="footer-tag">
-              Вторая жизнь вашей мебели за 7 дней. Донецк, Макеевка и весь
+              Вторая жизнь вашей мебели за 15 дней. Донецк, Макеевка и весь
               регион ДНР.
             </p>
             <div className="socials">
@@ -1344,7 +1353,7 @@ function TypePage() {
         <div style={{ textAlign: "center", marginTop: 32 }}>
           <a
             className="btn btn-primary"
-            href="https://max.ru/channel_peretyajka"
+            href="https://max.ru/u/f9LHodD0cOIb2Tv0HZyO-NRT9UJWPvPj8e-2REW_Cnq5XCVdNIjvwyM0Otk"
             target="_blank"
             rel="noreferrer"
           >
@@ -1411,7 +1420,7 @@ function CollectionPage() {
         <div style={{ textAlign: "center", marginTop: 32 }}>
           <a
             className="btn btn-primary"
-            href="https://max.ru/channel_peretyajka"
+            href="https://max.ru/u/f9LHodD0cOIb2Tv0HZyO-NRT9UJWPvPj8e-2REW_Cnq5XCVdNIjvwyM0Otk"
             target="_blank"
             rel="noreferrer"
           >
