@@ -10,10 +10,10 @@ import type { FabricType, Collection } from "./data/catalog";
 const TG_BOT_TOKEN = import.meta.env.VITE_TG_BOT_TOKEN as string;
 const TG_CHAT_ID = import.meta.env.VITE_TG_CHAT_ID as string;
 
-// Воркер Cloudflare: бьёт в Telegram и в Resend (почта). Секреты живут в воркере.
+// Воркер Cloudflare: бьёт в Telegram и в Resend (почта с вложениями)
 const LEADS_WORKER = "https://sofoniya-leads.dnrsabbath.workers.dev";
 
-// Запасной почтовый канал напрямую (FormSubmit), если воркер и TG недоступны
+// Запасной почтовый канал (FormSubmit), если воркер и TG недоступны
 const EMAIL_TO = "trakun178@yandex.ru";
 
 const LEGAL = {
@@ -72,15 +72,44 @@ function useReveal() {
 }
 
 // ────────────────────────────────────────────────────────────
-// КАНАЛЫ ОТПРАВКИ: воркер → прямой TG → почта FormSubmit
+// КАНАЛЫ ОТПРАВКИ: воркер (TG+почта с фото) → прямой TG → FormSubmit
 // ────────────────────────────────────────────────────────────
 
+type PhotoAtt = { filename: string; content: string };
 type LeadData = {
   name: string;
   phone: string;
   comment: string;
   service: string;
+  photos?: PhotoAtt[];
 };
+
+// Сжатие фото до 1280px JPEG + base64 для письма (~200–400 КБ вместо мегабайт)
+async function fileToAttachment(file: File): Promise<PhotoAtt | null> {
+  try {
+    const img = await createImageBitmap(file);
+    const scale = Math.min(1, 1280 / img.width);
+    const w = Math.round(img.width * scale);
+    const h = Math.round(img.height * scale);
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+    const blob = await new Promise<Blob | null>((res) =>
+      canvas.toBlob(res, "image/jpeg", 0.82),
+    );
+    if (!blob) return null;
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    let bin = "";
+    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return {
+      filename: (file.name || "photo").replace(/\.[^.]+$/, "") + ".jpg",
+      content: btoa(bin),
+    };
+  } catch {
+    return null;
+  }
+}
 
 async function sendViaWorker(data: LeadData) {
   const r = await fetch(LEADS_WORKER, {
@@ -124,20 +153,19 @@ async function sendEmailFallback(data: LeadData) {
   if (!r.ok) throw new Error("email send failed");
 }
 
-async function sendLead(data: {
-  name: string;
-  phone: string;
-  comment: string;
-  service: string;
-}) {
+async function sendLead(data: LeadData) {
   try {
     await sendViaWorker(data);
     return;
-  } catch {}
+  } catch {
+    /* воркер недоступен */
+  }
   try {
     await sendToTelegram(data);
     return;
-  } catch {}
+  } catch {
+    /* TG заблокирован */
+  }
   await sendEmailFallback(data);
 }
 
@@ -339,7 +367,7 @@ function MaskedPhone() {
 }
 
 // ────────────────────────────────────────────────────────────
-// LEAD-МОДАЛКА (фото + антиспам)
+// LEAD-МОДАЛКА (фото + антиспам + вложения в письмо)
 // ────────────────────────────────────────────────────────────
 
 function LeadModal({
@@ -367,7 +395,12 @@ function LeadModal({
     }
     setState("sending");
     try {
-      await sendLead({ name, phone, comment, service });
+      const att = photos.length
+        ? (await Promise.all(photos.map(fileToAttachment))).filter(
+            (x): x is PhotoAtt => x !== null,
+          )
+        : [];
+      await sendLead({ name, phone, comment, service, photos: att });
       if (photos.length)
         await sendPhotosToTelegram(
           photos,
@@ -538,11 +571,17 @@ function Calculator() {
       return;
     }
     try {
+      const att = photos.length
+        ? (await Promise.all(photos.map(fileToAttachment))).filter(
+            (x): x is PhotoAtt => x !== null,
+          )
+        : [];
       await sendLead({
         name,
         phone,
         comment: summary + `; итог ≈ ${total.toLocaleString("ru-RU")} ₽`,
         service: "Калькулятор: " + type.name,
+        photos: att,
       });
       if (photos.length)
         await sendPhotosToTelegram(
@@ -1149,7 +1188,7 @@ function Home() {
               alt="Перетяжка изголовья: до и после"
             />
           </div>
-          <aside className="works-card rev">
+          <div className="works-story rev">
             <h3>Изголовье кровати, каретная стяжка</h3>
             <p>
               Хозяйка думала выбросить: стяжка просела, ткань выцвела и местами
@@ -1168,7 +1207,7 @@ function Home() {
             >
               Хочу так же
             </button>
-          </aside>
+          </div>
         </div>
       </section>
 
@@ -1293,7 +1332,7 @@ function Home() {
         </div>
       </section>
 
-      {/* ПОДВАЛ (ссылки соцсетей — как договорились, не меняем) */}
+      {/* ПОДВАЛ (ссылки соцсетей не трогаем, как договорились) */}
       <footer className="footer" id="contacts">
         <div className="footer-grid">
           <div>
