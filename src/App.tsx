@@ -6,14 +6,9 @@ import type { FabricType, Collection } from "./data/catalog";
 // ────────────────────────────────────────────────────────────
 // КОНСТАНТЫ
 // ────────────────────────────────────────────────────────────
-
 const TG_BOT_TOKEN = import.meta.env.VITE_TG_BOT_TOKEN as string;
 const TG_CHAT_ID = import.meta.env.VITE_TG_CHAT_ID as string;
-
-// Воркер Cloudflare: бьёт в Telegram и в Resend (почта с вложениями)
 const LEADS_WORKER = "https://sofoniya-leads.dnrsabbath.workers.dev";
-
-// Запасной почтовый канал (FormSubmit), если воркер и TG недоступны
 const EMAIL_TO = "trakun178@yandex.ru";
 
 const LEGAL = {
@@ -52,7 +47,9 @@ function svgIcon(d: React.ReactNode, size = 22) {
   );
 }
 
-// Появление блоков при скролле
+// ────────────────────────────────────────────────────────────
+// ПОЯВЛЕНИЕ ПРИ СКРОЛЛЕ
+// ────────────────────────────────────────────────────────────
 function useReveal() {
   useEffect(() => {
     const els = document.querySelectorAll(".rev");
@@ -72,9 +69,8 @@ function useReveal() {
 }
 
 // ────────────────────────────────────────────────────────────
-// КАНАЛЫ ОТПРАВКИ: воркер (TG+почта с фото) → прямой TG → FormSubmit
+// ОТПРАВКА ЗАЯВОК
 // ────────────────────────────────────────────────────────────
-
 type PhotoAtt = { filename: string; content: string };
 type LeadData = {
   name: string;
@@ -84,7 +80,6 @@ type LeadData = {
   photos?: PhotoAtt[];
 };
 
-// Сжатие фото до 1280px JPEG + base64 для письма (~200–400 КБ вместо мегабайт)
 async function fileToAttachment(file: File): Promise<PhotoAtt | null> {
   try {
     const img = await createImageBitmap(file);
@@ -198,9 +193,8 @@ async function sendPhotosToTelegram(files: File[], caption: string) {
 }
 
 // ────────────────────────────────────────────────────────────
-// ЭКОНОМИКА: работа фикс за тип, материал по категориям
+// ЭКОНОМИКА
 // ────────────────────────────────────────────────────────────
-
 const CALC = {
   laborPerM: 1000,
   types: [
@@ -233,8 +227,10 @@ const CALC = {
   ],
   materials: [
     { id: "own", name: "Своя ткань", rate: 0 },
-    { id: "std", name: "Ткань стандарт", rate: 1000 },
-    { id: "prem", name: "Ткань премиум", rate: 3000 },
+    { id: "cat1", name: "Ткань 1 кат.", rate: 1500 },
+    { id: "cat2", name: "Ткань 2 кат.", rate: 2500 },
+    { id: "cat3", name: "Ткань 3 кат.", rate: 3000 },
+    { id: "cat4", name: "Ткань 4 кат.", rate: 4000 },
     { id: "eco", name: "Экокожа", rate: 5000 },
     { id: "leather", name: "Натуральная кожа", rate: 10000 },
   ],
@@ -243,7 +239,6 @@ const CALC = {
 // ────────────────────────────────────────────────────────────
 // МАЛЫЕ КОМПОНЕНТЫ
 // ────────────────────────────────────────────────────────────
-
 function CoverImg({ t, c }: { t: FabricType; c: Collection }) {
   return (
     <span className={`show-media ${t.cls}`}>
@@ -367,9 +362,8 @@ function MaskedPhone() {
 }
 
 // ────────────────────────────────────────────────────────────
-// LEAD-МОДАЛКА (фото + антиспам + вложения в письмо)
+// LEAD-МОДАЛКА
 // ────────────────────────────────────────────────────────────
-
 function LeadModal({
   service,
   onClose,
@@ -415,9 +409,11 @@ function LeadModal({
   return (
     <div className="lm-overlay" onClick={onClose}>
       <div className="lm-card" onClick={(e) => e.stopPropagation()}>
-        <button className="lm-close" onClick={onClose} aria-label="Закрыть">
-          ✕
-        </button>
+        <button
+          className="lm-close"
+          onClick={onClose}
+          aria-label="Закрыть"
+        ></button>
         {state === "done" ? (
           <div className="lm-done">
             <h3>Заявка отправлена!</h3>
@@ -485,8 +481,8 @@ function LeadModal({
                   Не удалось отправить. Позвоните мастеру или напишите в{" "}
                   <a href={LINKS.max} target="_blank" rel="noreferrer">
                     MAX
-                  </a>{" "}
-                  /{" "}
+                  </a>
+                  {" / "}
                   <a href={LINKS.tg} target="_blank" rel="noreferrer">
                     Telegram
                   </a>
@@ -507,7 +503,6 @@ function LeadModal({
 // ────────────────────────────────────────────────────────────
 // КАЛЬКУЛЯТОР-WIZARD
 // ────────────────────────────────────────────────────────────
-
 function Calculator() {
   const [step, setStep] = useState(0);
   const [typeId, setTypeId] = useState("straight");
@@ -749,7 +744,7 @@ function Calculator() {
                 }
               />
               {photos.length
-                ? `📎 Фото прикреплено: ${photos.length}`
+                ? ` Фото прикреплено: ${photos.length}`
                 : "📎 Прикрепить фото мебели (до 3 шт)"}
             </label>
             <input
@@ -798,9 +793,8 @@ function Calculator() {
 }
 
 // ────────────────────────────────────────────────────────────
-// FAB (MAX первым)
+// FAB
 // ────────────────────────────────────────────────────────────
-
 function ContactFab() {
   const [i, setI] = useState(0);
   const [open, setOpen] = useState(false);
@@ -884,7 +878,6 @@ function ContactFab() {
 // ────────────────────────────────────────────────────────────
 // ГЛАВНАЯ
 // ────────────────────────────────────────────────────────────
-
 function Home() {
   const [modal, setModal] = useState<string | null>(null);
   const [navOpen, setNavOpen] = useState(false);
@@ -941,7 +934,6 @@ function Home() {
 
   return (
     <>
-      {/* БЕГУЩАЯ СТРОКА */}
       <div className="marquee" aria-hidden="true">
         <div className="marquee-track">
           {[...MARQUEE, ...MARQUEE].map((m, i) => (
@@ -950,7 +942,6 @@ function Home() {
         </div>
       </div>
 
-      {/* ШАПКА */}
       <header className="header">
         <Link to="/" className="logo">
           <span>SOFONIYA</span>
@@ -1000,7 +991,6 @@ function Home() {
         </div>
       </header>
 
-      {/* HERO */}
       <section className="hero">
         <div className="hero-left">
           <span className="overline">ДНР · Донецк · Макеевка</span>
@@ -1057,7 +1047,6 @@ function Home() {
         </div>
       </section>
 
-      {/* УСЛУГИ */}
       <section className="section" id="services">
         <div className="section-head rev" data-num="01">
           <span className="overline">Услуги</span>
@@ -1080,7 +1069,6 @@ function Home() {
         </div>
       </section>
 
-      {/* ТКАНИ */}
       <section className="section" id="fabrics">
         <div className="section-head rev" data-num="02">
           <span className="overline">Материалы</span>
@@ -1125,7 +1113,6 @@ function Home() {
         </div>
       </section>
 
-      {/* ВИТРИНА */}
       <section className="section" id="collections">
         <div className="section-head rev" data-num="03">
           <span className="overline">Коллекции</span>
@@ -1158,7 +1145,6 @@ function Home() {
         </div>
       </section>
 
-      {/* КАЛЬКУЛЯТОР */}
       <section className="section" id="calc">
         <div className="section-head rev" data-num="04">
           <span className="overline">Калькулятор</span>
@@ -1171,7 +1157,6 @@ function Home() {
         <Calculator />
       </section>
 
-      {/* ДО / ПОСЛЕ */}
       <section className="section" id="works">
         <div className="section-head rev" data-num="05">
           <span className="overline">Работы</span>
@@ -1211,7 +1196,6 @@ function Home() {
         </div>
       </section>
 
-      {/* CTA: РАСЧЁТ ПО ФОТО */}
       <section className="cta-band">
         <div className="cta-inner">
           <div>
@@ -1242,7 +1226,6 @@ function Home() {
         </div>
       </section>
 
-      {/* ПРОЦЕСС */}
       <section className="section" id="process">
         <div className="section-head rev" data-num="06">
           <span className="overline">Процесс</span>
@@ -1290,7 +1273,6 @@ function Home() {
         </div>
       </section>
 
-      {/* FAQ */}
       <section className="section" id="faq">
         <div className="faq-wrap">
           <div className="faq-left rev">
@@ -1332,7 +1314,6 @@ function Home() {
         </div>
       </section>
 
-      {/* ПОДВАЛ (ссылки соцсетей не трогаем, как договорились) */}
       <footer className="footer" id="contacts">
         <div className="footer-grid">
           <div>
@@ -1414,7 +1395,6 @@ function Home() {
 // ────────────────────────────────────────────────────────────
 // СТРАНИЦА ТИПА ТКАНИ
 // ────────────────────────────────────────────────────────────
-
 function TypePage() {
   const { typeId } = useParams();
   const t = CATALOG.find((x) => x.id === typeId);
@@ -1471,7 +1451,6 @@ function TypePage() {
 // ────────────────────────────────────────────────────────────
 // СТРАНИЦА КОЛЛЕКЦИИ
 // ────────────────────────────────────────────────────────────
-
 function CollectionPage() {
   const { typeId, colId } = useParams();
   const t = CATALOG.find((x) => x.id === typeId);
@@ -1538,7 +1517,6 @@ function CollectionPage() {
 // ────────────────────────────────────────────────────────────
 // РОУТЕР
 // ────────────────────────────────────────────────────────────
-
 export default function App() {
   return (
     <HashRouter>
