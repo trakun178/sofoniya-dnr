@@ -577,14 +577,34 @@ function Calculator() {
 
   // ПОЛНЫЕ НАЗВАНИЯ ДЛЯ ИКОНОК
   const furnitureTypes = [
-    { id: "straight", name: "Прямой диван", icon: SOFA_ICON },
-    { id: "corner", name: "Угловой диван", icon: CORNER_ICON },
-    { id: "armchair", name: "Кресло", icon: ARMCHAIR_ICON },
-    { id: "chair", name: "Стул", icon: CHAIR_ICON },
-    { id: "kitchen", name: "Кухонный уголок", icon: KITCHEN_ICON },
+    { id: "straight", name: "Прямой диван", icon: SOFA_ICON, work: 25000 },
+    { id: "corner", name: "Угловой диван", icon: CORNER_ICON, work: 45000 },
+    { id: "armchair", name: "Кресло", icon: ARMCHAIR_ICON, work: 15000 },
+    { id: "chair", name: "Стул", icon: CHAIR_ICON, work: 3000 },
+    { id: "kitchen", name: "Кухонный уголок", icon: KITCHEN_ICON, work: 20000 },
   ];
 
-  const summary = `Тип: ${type.name}; ширина ${width} мм; механизм: ${mech.name}; подушки: ${back}+${seat}; стяжка: ${tuft ? "да" : "нет"}; отделка: ${fins.map((i) => CALC.finishes.find((f) => f.id === i)!.name).join(", ") || "—"}; ремонт: ${reps.map((i) => CALC.repairs.find((r) => r.id === i)!.name).join(", ") || "—"}; материал: ${mat.name}; расход ≈ ${meters} м`;
+  const finishNames =
+    fins
+      .map((i) => CALC.finishes.find((f) => f.id === i)?.name)
+      .filter(Boolean)
+      .join(", ") || "—";
+
+  const repairNames =
+    reps
+      .map((i) => CALC.repairs.find((r) => r.id === i)?.name)
+      .filter(Boolean)
+      .join(", ") || "—";
+
+  const summary =
+    `Тип: ${type.name}; ширина ${width} мм; ` +
+    `механизм: ${mech.name}; ` +
+    `подушки: ${back}+${seat}; ` +
+    `стяжка: ${tuft ? "да" : "нет"}; ` +
+    `отделка: ${finishNames}; ` +
+    `ремонт: ${repairNames}; ` +
+    `материал: ${mat.name}; ` +
+    `расход ≈ ${meters} м`;
 
   const send = async () => {
     if (hp.trim() !== "" || Date.now() - openedAt.current < 1500) {
