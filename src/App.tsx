@@ -191,11 +191,11 @@ async function sendPhotosToTelegram(files: File[], caption: string) {
 const CALC = {
   laborPerM: 1000,
   types: [
-    { id: "straight", name: "Прямой диван", baseM: 9, work: 16000 },
-    { id: "corner", name: "Угловой диван", baseM: 13, work: 32000 },
-    { id: "armchair", name: "Кресло", baseM: 7, work: 8000 },
-    { id: "chair", name: "Стул", baseM: 3, work: 0 },
-    { id: "kitchen", name: "Кухонный уголок", baseM: 10, work: 10000 },
+    { id: "straight", name: "Прямой диван", baseM: 9, work: 25000 },
+    { id: "corner", name: "Угловой диван", baseM: 13, work: 45000 },
+    { id: "armchair", name: "Кресло", baseM: 7, work: 9000 }, // от 9000 (офисное) до 15000
+    { id: "chair", name: "Стул", baseM: 3, work: 3000 },
+    { id: "kitchen", name: "Кухонный уголок", baseM: 10, work: 20000 },
   ],
   mechanisms: [
     { id: "none", name: "Без механизма", m: 0 },
@@ -542,7 +542,6 @@ function LeadModal({
 // КАЛЬКУЛЯТОР (НОВЫЙ ДИЗАЙН: тёмная тема, иконки, слайдеры)
 // ────────────────────────────────────────────────────────────
 function Calculator() {
-  const [step, setStep] = useState(0);
   const [typeId, setTypeId] = useState("straight");
   const [width, setWidth] = useState(2000);
   const [depth, setDepth] = useState(950);
@@ -585,17 +584,6 @@ function Calculator() {
 
   const toggle = (arr: string[], id: string, set: (v: string[]) => void) =>
     set(arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id]);
-
-  const steps = [
-    { id: "type", title: "Что перетягиваем" },
-    { id: "size", title: "Размеры" },
-    { id: "armrests", title: "Подлокотники" },
-    { id: "mech", title: "Механизм" },
-    { id: "cushions", title: "Подушки" },
-    { id: "fabric", title: "Обивка" },
-    { id: "finish", title: "Отделка" },
-    { id: "repair", title: "Ремонт" },
-  ];
 
   const furnitureTypes = [
     { id: "straight", name: "Прямой", icon: SOFA_ICON },
@@ -644,207 +632,203 @@ function Calculator() {
         </h2>
       </div>
 
-      <div className="calc-steps">
-        {steps.map((s, i) => (
+      {/* ШАГ 1: ЧТО ПЕРЕТЯГИВАЕМ */}
+      <div className="calc-section">
+        <h3 className="calc-section-title">01 Что перетягиваем</h3>
+        <div className="calc-grid">
+          {furnitureTypes.map((t) => (
+            <button
+              key={t.id}
+              className={`calc-card ${typeId === t.id ? "active" : ""}`}
+              onClick={() => setTypeId(t.id)}
+            >
+              <span className="card-icon">{t.icon}</span>
+              <span className="card-name">{t.name}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ШАГ 2: РАЗМЕРЫ */}
+      <div className="calc-section">
+        <h3 className="calc-section-title">02 Размеры</h3>
+        <div className="calc-sliders">
+          <div className="slider-group">
+            <label>
+              Ширина{" "}
+              <span>
+                {width} <small>мм</small>
+              </span>
+            </label>
+            <input
+              type="range"
+              min="400"
+              max="4000"
+              step="50"
+              value={width}
+              onChange={(e) => setWidth(+e.target.value)}
+            />
+          </div>
+          <div className="slider-group">
+            <label>
+              Глубина{" "}
+              <span>
+                {depth} <small>мм</small>
+              </span>
+            </label>
+            <input
+              type="range"
+              min="400"
+              max="1200"
+              step="50"
+              value={depth}
+              onChange={(e) => setDepth(+e.target.value)}
+            />
+          </div>
+          <div className="slider-group">
+            <label>
+              Высота{" "}
+              <span>
+                {height} <small>мм</small>
+              </span>
+            </label>
+            <input
+              type="range"
+              min="400"
+              max="1200"
+              step="50"
+              value={height}
+              onChange={(e) => setHeight(+e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ШАГ 3: ПОДЛОКОТНИКИ */}
+      <div className="calc-section">
+        <h3 className="calc-section-title">03 Подлокотники</h3>
+        <div className="calc-chips">
           <button
-            key={s.id}
-            className={`calc-step ${i === step ? "active" : i < step ? "done" : ""}`}
-            onClick={() => setStep(i)}
+            className={`chip ${armrests === "two" ? "active" : ""}`}
+            onClick={() => setArmrests("two")}
           >
-            <span className="step-num">{String(i + 1).padStart(2, "0")}</span>
-            <span className="step-title">{s.title}</span>
+            Два
           </button>
-        ))}
+          <button
+            className={`chip ${armrests === "one" ? "active" : ""}`}
+            onClick={() => setArmrests("one")}
+          >
+            Один
+          </button>
+          <button
+            className={`chip ${armrests === "none" ? "active" : ""}`}
+            onClick={() => setArmrests("none")}
+          >
+            Без
+          </button>
+        </div>
       </div>
 
-      <div className="calc-content">
-        {step === 0 && (
-          <div className="calc-grid">
-            {furnitureTypes.map((t) => (
-              <button
-                key={t.id}
-                className={`calc-card ${typeId === t.id ? "active" : ""}`}
-                onClick={() => setTypeId(t.id)}
-              >
-                <span className="card-icon">{t.icon}</span>
-                <span className="card-name">{t.name}</span>
-              </button>
-            ))}
-          </div>
-        )}
-
-        {step === 1 && (
-          <div className="calc-sliders">
-            <div className="slider-group">
-              <label>
-                Ширина{" "}
-                <span>
-                  {width} <small>мм</small>
-                </span>
-              </label>
-              <input
-                type="range"
-                min="1200"
-                max="4000"
-                step="50"
-                value={width}
-                onChange={(e) => setWidth(+e.target.value)}
-              />
-            </div>
-            <div className="slider-group">
-              <label>
-                Глубина{" "}
-                <span>
-                  {depth} <small>мм</small>
-                </span>
-              </label>
-              <input
-                type="range"
-                min="600"
-                max="1200"
-                step="50"
-                value={depth}
-                onChange={(e) => setDepth(+e.target.value)}
-              />
-            </div>
-            <div className="slider-group">
-              <label>
-                Высота{" "}
-                <span>
-                  {height} <small>мм</small>
-                </span>
-              </label>
-              <input
-                type="range"
-                min="600"
-                max="1200"
-                step="50"
-                value={height}
-                onChange={(e) => setHeight(+e.target.value)}
-              />
-            </div>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div className="calc-chips">
+      {/* ШАГ 4: МЕХАНИЗМ */}
+      <div className="calc-section">
+        <h3 className="calc-section-title">04 Механизм</h3>
+        <div className="calc-chips">
+          {CALC.mechanisms.map((m) => (
             <button
-              className={`chip ${armrests === "two" ? "active" : ""}`}
-              onClick={() => setArmrests("two")}
+              key={m.id}
+              className={`chip ${mechId === m.id ? "active" : ""}`}
+              onClick={() => setMechId(m.id)}
             >
-              Два
+              {m.name}
             </button>
-            <button
-              className={`chip ${armrests === "one" ? "active" : ""}`}
-              onClick={() => setArmrests("one")}
-            >
-              Один
-            </button>
-            <button
-              className={`chip ${armrests === "none" ? "active" : ""}`}
-              onClick={() => setArmrests("none")}
-            >
-              Без
-            </button>
-          </div>
-        )}
-
-        {step === 3 && (
-          <div className="calc-chips">
-            {CALC.mechanisms.map((m) => (
-              <button
-                key={m.id}
-                className={`chip ${mechId === m.id ? "active" : ""}`}
-                onClick={() => setMechId(m.id)}
-              >
-                {m.name}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {step === 4 && (
-          <div className="calc-counters">
-            <div className="counter">
-              <span>Спинки</span>
-              <div className="counter-controls">
-                <button onClick={() => setBack(Math.max(0, back - 1))}>
-                  −
-                </button>
-                <b>{back}</b>
-                <button onClick={() => setBack(back + 1)}>+</button>
-              </div>
-            </div>
-            <div className="counter">
-              <span>Сиденья</span>
-              <div className="counter-controls">
-                <button onClick={() => setSeat(Math.max(0, seat - 1))}>
-                  −
-                </button>
-                <b>{seat}</b>
-                <button onClick={() => setSeat(seat + 1)}>+</button>
-              </div>
-            </div>
-            <button
-              className={`chip ${tuft ? "active" : ""}`}
-              onClick={() => setTuft(!tuft)}
-              style={{ width: "100%", justifyContent: "center" }}
-            >
-              Каретная стяжка ×1,5
-            </button>
-          </div>
-        )}
-
-        {step === 5 && (
-          <div className="calc-fabric">
-            {CALC.materials.map((m) => (
-              <button
-                key={m.id}
-                className={`fabric-card ${matId === m.id ? "active" : ""}`}
-                onClick={() => setMatId(m.id)}
-              >
-                <span>{m.name}</span>
-                <strong>
-                  {(labor + Math.round(meters * m.rate)).toLocaleString(
-                    "ru-RU",
-                  )}{" "}
-                  ₽
-                </strong>
-              </button>
-            ))}
-          </div>
-        )}
-
-        {step === 6 && (
-          <div className="calc-finish">
-            {CALC.finishes.map((f) => (
-              <button
-                key={f.id}
-                className={`finish-btn ${fins.includes(f.id) ? "active" : ""}`}
-                onClick={() => toggle(fins, f.id, setFins)}
-              >
-                <span>+</span> {f.name}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {step === 7 && (
-          <div className="calc-repair">
-            <p className="repair-note">по 3 000 ₽ за работу</p>
-            {CALC.repairs.map((r) => (
-              <button
-                key={r.id}
-                className={`repair-btn ${reps.includes(r.id) ? "active" : ""}`}
-                onClick={() => toggle(reps, r.id, setReps)}
-              >
-                <span>+</span> {r.name}
-              </button>
-            ))}
-          </div>
-        )}
+          ))}
+        </div>
       </div>
 
+      {/* ШАГ 5: ПОДУШКИ */}
+      <div className="calc-section">
+        <h3 className="calc-section-title">05 Подушки</h3>
+        <div className="calc-counters">
+          <div className="counter">
+            <span>Спинки</span>
+            <div className="counter-controls">
+              <button onClick={() => setBack(Math.max(0, back - 1))}>−</button>
+              <b>{back}</b>
+              <button onClick={() => setBack(back + 1)}>+</button>
+            </div>
+          </div>
+          <div className="counter">
+            <span>Сиденья</span>
+            <div className="counter-controls">
+              <button onClick={() => setSeat(Math.max(0, seat - 1))}>−</button>
+              <b>{seat}</b>
+              <button onClick={() => setSeat(seat + 1)}>+</button>
+            </div>
+          </div>
+          <button
+            className={`chip ${tuft ? "active" : ""}`}
+            onClick={() => setTuft(!tuft)}
+            style={{ width: "100%", justifyContent: "center" }}
+          >
+            Каретная стяжка ×1,5
+          </button>
+        </div>
+      </div>
+
+      {/* ШАГ 6: ОБИВКА */}
+      <div className="calc-section">
+        <h3 className="calc-section-title">06 Обивка</h3>
+        <div className="calc-fabric">
+          {CALC.materials.map((m) => (
+            <button
+              key={m.id}
+              className={`fabric-card ${matId === m.id ? "active" : ""}`}
+              onClick={() => setMatId(m.id)}
+            >
+              <span>{m.name}</span>
+              <strong>
+                {(labor + Math.round(meters * m.rate)).toLocaleString("ru-RU")}{" "}
+                ₽
+              </strong>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ШАГ 7: ОТДЕЛКА */}
+      <div className="calc-section">
+        <h3 className="calc-section-title">07 Отделка</h3>
+        <div className="calc-finish">
+          {CALC.finishes.map((f) => (
+            <button
+              key={f.id}
+              className={`finish-btn ${fins.includes(f.id) ? "active" : ""}`}
+              onClick={() => toggle(fins, f.id, setFins)}
+            >
+              <span>+</span> {f.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ШАГ 8: РЕМОНТ */}
+      <div className="calc-section">
+        <h3 className="calc-section-title">08 Ремонт</h3>
+        <p className="repair-note">по 3 000 ₽ за работу</p>
+        <div className="calc-repair">
+          {CALC.repairs.map((r) => (
+            <button
+              key={r.id}
+              className={`repair-btn ${reps.includes(r.id) ? "active" : ""}`}
+              onClick={() => toggle(reps, r.id, setReps)}
+            >
+              <span>+</span> {r.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ИТОГ + ОТПРАВКА */}
       <div className="calc-summary-block">
         <div className="summary-card">
           <span className="summary-label">ОРИЕНТИРОВОЧНАЯ СТОИМОСТЬ</span>
@@ -896,8 +880,8 @@ function Calculator() {
                 }
               />
               {photos.length
-                ? `📎 Фото: ${photos.length}`
-                : "📎 Прикрепить фото (до 3 шт)"}
+                ? ` Фото: ${photos.length}`
+                : " Прикрепить фото (до 3 шт)"}
             </label>
             <input
               className="lm-hp"
@@ -929,23 +913,6 @@ function Calculator() {
             </p>
           </div>
         </div>
-      </div>
-
-      <div className="calc-nav-buttons">
-        <button
-          className="nav-prev"
-          onClick={() => setStep(Math.max(0, step - 1))}
-          disabled={step === 0}
-        >
-          ← Назад
-        </button>
-        <button
-          className="nav-next"
-          onClick={() => setStep(Math.min(steps.length - 1, step + 1))}
-          disabled={step === steps.length - 1}
-        >
-          Далее →
-        </button>
       </div>
     </div>
   );

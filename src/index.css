@@ -600,6 +600,7 @@ button {
 }
 
 /* ═══ НОВЫЙ КАЛЬКУЛЯТОР: тёмная тема ═══ */
+/* ═══ ОДНОСТРАНИЧНЫЙ КАЛЬКУЛЯТОР ═══ */
 .calc-new {
   max-width: 900px;
   margin: 0 auto;
@@ -633,42 +634,14 @@ button {
   color: var(--orange);
 }
 
-.calc-steps {
-  display: flex;
-  gap: 12px;
+.calc-section {
   margin-bottom: 32px;
-  overflow-x: auto;
-  padding-bottom: 8px;
 }
-.calc-step {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background: #2a2e35;
-  border: 2px solid transparent;
-  border-radius: 12px;
-  color: #8fb8d6;
-  font-size: 13px;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: 0.2s;
-}
-.calc-step.active {
-  border-color: var(--orange);
-  color: #ffffff;
-}
-.calc-step.done {
-  color: var(--orange);
-}
-.step-num {
+.calc-section-title {
+  font-size: 20px;
   font-weight: 700;
-  font-size: 14px;
-}
-
-.calc-content {
-  min-height: 300px;
-  margin-bottom: 32px;
+  margin-bottom: 16px;
+  color: #8fb8d6;
 }
 
 .calc-grid {
@@ -724,13 +697,15 @@ button {
   font-size: 15px;
   color: #8fb8d6;
 }
-.slider-group input[type="range"] {
-  width: 100%;
-  height: 6px;
-  background: #3a404a;
-  border-radius: 3px;
-  outline: none;
+.slider-group input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
+  appearance: none; /* ← добавь эту строку */
+  width: 24px;
+  height: 24px;
+  background: var(--orange);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid #1a1a2e;
 }
 .slider-group input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -999,39 +974,6 @@ button {
   margin-top: 16px;
 }
 
-.calc-nav-buttons {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  margin-top: 24px;
-}
-.nav-prev,
-.nav-next {
-  padding: 14px 28px;
-  border-radius: 10px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
-  transition: 0.2s;
-}
-.nav-prev {
-  background: #2a2e35;
-  color: #8fb8d6;
-}
-.nav-prev:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-.nav-next {
-  background: var(--orange);
-  color: #1a1a2e;
-}
-.nav-next:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
 @media (max-width: 640px) {
   .calc-new {
     padding: 24px 16px;
@@ -1047,13 +989,6 @@ button {
   }
   .price-value {
     font-size: 36px;
-  }
-  .calc-steps {
-    gap: 8px;
-  }
-  .calc-step {
-    padding: 8px 12px;
-    font-size: 12px;
   }
 }
 /* ═══ КОНЕЦ НОВОГО КАЛЬКУЛЯТОРА ═══ */
