@@ -193,7 +193,7 @@ const CALC = {
   types: [
     { id: "straight", name: "Прямой диван", baseM: 9, work: 25000 },
     { id: "corner", name: "Угловой диван", baseM: 13, work: 45000 },
-    { id: "armchair", name: "Кресло", baseM: 7, work: 9000 }, // от 9000 (офисное) до 15000
+    { id: "armchair", name: "Кресло", baseM: 7, work: 12000 },
     { id: "chair", name: "Стул", baseM: 3, work: 3000 },
     { id: "kitchen", name: "Кухонный уголок", baseM: 10, work: 20000 },
   ],
@@ -221,12 +221,12 @@ const CALC = {
   ],
   materials: [
     { id: "own", name: "Своя ткань", rate: 0 },
-    { id: "cat1", name: "Ткань 1 кат.", rate: 1500 },
-    { id: "cat2", name: "Ткань 2 кат.", rate: 2500 },
-    { id: "cat3", name: "Ткань 3 кат.", rate: 3000 },
-    { id: "cat4", name: "Ткань 4 кат.", rate: 4000 },
-    { id: "eco", name: "Экокожа", rate: 5000 },
-    { id: "leather", name: "Натуральная кожа", rate: 10000 },
+    { id: "cat1", name: "Ткань 1 категории", rate: 0 },
+    { id: "cat2", name: "Ткань 2 категории", rate: 1000 },
+    { id: "cat3", name: "Ткань 3 категории", rate: 1500 },
+    { id: "cat4", name: "Ткань 4 категории", rate: 2500 },
+    { id: "eco", name: "Экокожа", rate: 3500 },
+    { id: "leather", name: "Натуральная кожа", rate: 8000 },
   ],
 };
 
@@ -577,7 +577,7 @@ function Calculator() {
     .filter((r) => reps.includes(r.id))
     .reduce((s, r) => s + r.price, 0);
   const labor = Math.round(
-    type.work + extraM * CALC.laborPerM + finSum + repSum,
+    type.work + mech.m * CALC.laborPerM + finSum + repSum,
   );
   const material = Math.round(meters * mat.rate);
   const total = labor + material;
@@ -1010,6 +1010,49 @@ function Home() {
   const [videoOk, setVideoOk] = useState(true);
   useReveal();
 
+  useEffect(() => {
+    document.title = "Перетяжка мягкой мебели в Донецке и ДНР — SOFONIYA";
+    const description = "Профессиональная перетяжка диванов, кресел, стульев и кухонных уголков в Донецке, Макеевке и по ДНР. Подбор ткани, ремонт мебели, расчёт стоимости онлайн.";
+    let meta = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
+    if (!meta) {
+      meta = document.createElement("meta");
+      meta.name = "description";
+      document.head.appendChild(meta);
+    }
+    meta.content = description;
+    let robots = document.querySelector('meta[name="robots"]') as HTMLMetaElement | null;
+    if (!robots) {
+      robots = document.createElement("meta");
+      robots.name = "robots";
+      document.head.appendChild(robots);
+    }
+    robots.content = "index,follow,max-image-preview:large";
+    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.rel = "canonical";
+      document.head.appendChild(canonical);
+    }
+    canonical.href = "https://peretyazhka.sofoniya.ru/";
+    let ld = document.getElementById("sofoniya-local-business") as HTMLScriptElement | null;
+    if (!ld) {
+      ld = document.createElement("script");
+      ld.id = "sofoniya-local-business";
+      ld.type = "application/ld+json";
+      document.head.appendChild(ld);
+    }
+    ld.text = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "HomeAndConstructionBusiness",
+      name: "SOFONIYA — перетяжка мягкой мебели",
+      url: "https://peretyazhka.sofoniya.ru/",
+      telephone: "+79490983532",
+      areaServed: ["Донецк", "Макеевка", "ДНР"],
+      priceRange: "от 3 000 ₽",
+      description
+    });
+  }, []);
+
   const go = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
     setNavOpen(false);
@@ -1029,7 +1072,7 @@ function Home() {
     {
       name: "Перетяжка кресла",
       desc: "Вольтеровские, офисные, каминные",
-      price: "от 15 000 ₽",
+      price: "от 12 000 ₽",
     },
     {
       name: "Стулья и банкетки",
