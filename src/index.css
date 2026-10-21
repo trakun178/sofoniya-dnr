@@ -104,7 +104,6 @@ button {
   transition:
     opacity 0.6s ease,
     transform 0.6s ease;
-  will-change: transform, opacity; /* ← добавь */
 }
 .rev.on {
   opacity: 1;
@@ -2500,5 +2499,35 @@ input:focus-visible {
   .rev {
     opacity: 1;
     transform: none;
+  }
+}
+/* ═══ МОБИЛЬНОЕ ДО/ПОСЛЕ: аккуратное окно как видео в шапке ═══ */
+@media (max-width: 960px) {
+  .works-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .aba-wrap {
+    width: 100%;
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 8px;
+    border-radius: 22px;
+  }
+  .aba {
+    aspect-ratio: auto;
+    height: min(62vw, 340px);
+    max-height: 340px;
+    border-radius: 16px;
+  }
+}
+@media (max-width: 640px) {
+  .aba-wrap {
+    max-width: 100%;
+    border-radius: 18px;
+  }
+  .aba {
+    height: min(66vw, 300px);
+    border-radius: 14px;
   }
 }
