@@ -190,22 +190,22 @@ async function sendPhotosToTelegram(files: File[], caption: string) {
 // ────────────────────────────────────────────────────────────
 const CALC = {
   laborPerM: 1000,
+  cushionM: 1.5,
+  tuftMult: 1.5,
   types: [
-    { id: "straight", name: "Прямой диван", baseM: 9, work: 20000 },
-    { id: "corner", name: "Угловой диван", baseM: 13, work: 40000 },
-    { id: "armchair", name: "Кресло", baseM: 7, work: 12000 },
-    { id: "chair", name: "Стул", baseM: 3, work: 2500 },
-    { id: "kitchen", name: "Кухонный уголок", baseM: 10, work: 15000 },
+    { id: "straight", name: "Прямой диван", baseM: 9, labor: 16000 },
+    { id: "corner", name: "Угловой диван", baseM: 13, labor: 32000 },
+    { id: "armchair", name: "Кресло", baseM: 7, labor: 8000 },
+    { id: "chair", name: "Стул", baseM: 1.5, labor: 1500 },
+    { id: "kitchen", name: "Кухонный уголок", baseM: 10, labor: 10000 },
   ],
   mechanisms: [
-    { id: "none", name: "Без механизма", m: 0 },
-    { id: "book", name: "Книжка", m: 3 },
-    { id: "euro", name: "Еврокнижка", m: 4 },
-    { id: "dolphin", name: "Дельфин", m: 4 },
-    { id: "tick", name: "Тик-так", m: 4 },
+    { id: "none", name: "Без механизма", m: 0, labor: 0 },
+    { id: "book", name: "Книжка", m: 2, labor: 1000 },
+    { id: "euro", name: "Еврокнижка", m: 2, labor: 1500 },
+    { id: "dolphin", name: "Дельфин", m: 3, labor: 1500 },
+    { id: "tick", name: "Тик-так", m: 3, labor: 1500 },
   ],
-  cushionM: 2,
-  tuftMult: 1.5,
   finishes: [
     { id: "stitch", name: "Отстрочка", price: 1000 },
     { id: "kant", name: "Кант", price: 1500 },
@@ -221,12 +221,12 @@ const CALC = {
   ],
   materials: [
     { id: "own", name: "Своя ткань", rate: 0 },
-    { id: "cat1", name: "Ткань 1 категории", rate: 0 },
-    { id: "cat2", name: "Ткань 2 категории", rate: 1000 },
-    { id: "cat3", name: "Ткань 3 категории", rate: 1500 },
-    { id: "cat4", name: "Ткань 4 категории", rate: 2500 },
+    { id: "cat1", name: "Ткань 1 кат. (стандарт)", rate: 1000 },
+    { id: "cat2", name: "Ткань 2 кат.", rate: 1500 },
+    { id: "cat3", name: "Ткань 3 кат.", rate: 2000 },
+    { id: "cat4", name: "Ткань 4 кат.", rate: 2500 },
     { id: "eco", name: "Экокожа", rate: 3500 },
-    { id: "leather", name: "Натуральная кожа", rate: 10000 },
+    { id: "leather", name: "Натуральная кожа", rate: 8000 },
   ],
 };
 
