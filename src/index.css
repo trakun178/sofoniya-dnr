@@ -2531,3 +2531,36 @@ input:focus-visible {
     border-radius: 14px;
   }
 }
+/* ═══ УСЛУГИ: колонки выровнены во всех строках ═══ */
+.row {
+  grid-template-columns: 48px minmax(0, 1.05fr) minmax(0, 1.2fr) 160px 24px;
+}
+.row-price {
+  width: 160px;
+  justify-self: end;
+  text-align: right;
+}
+@media (max-width: 960px) {
+  .row {
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+  }
+  .row-price {
+    width: auto;
+  }
+}
+@media (max-width: 640px) {
+  .row {
+    grid-template-columns: 30px minmax(0, 1fr);
+  }
+  .row-price {
+    grid-column: 2;
+    grid-row: 2;
+    width: auto;
+    justify-self: start;
+    text-align: left;
+  }
+  .row-desc {
+    grid-column: 2;
+    grid-row: 3;
+  }
+}

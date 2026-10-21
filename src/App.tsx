@@ -237,29 +237,16 @@ const SOFA_ICON = (
   <svg
     viewBox="0 0 64 64"
     fill="none"
-    aria-hidden="true"
     stroke="currentColor"
-    strokeWidth="2.2"
+    strokeWidth="3"
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    <path
-      d="M13 29v-8a5 5 0 0 1 5-5h28a5 5 0 0 1 5 5v8"
-      fill="currentColor"
-      fillOpacity=".10"
-    />
-    <path d="M13 29v-5a5 5 0 0 0-5 5v15a5 5 0 0 0 5 5h38a5 5 0 0 0 5-5V29a5 5 0 0 0-5-5v5" />
-    <rect
-      x="13"
-      y="28"
-      width="38"
-      height="16"
-      rx="4"
-      fill="currentColor"
-      fillOpacity=".10"
-    />
-    <path d="M19 31v10m26-10v10M18 49v6m28-6v6" />
-    <path d="M13 36h38" strokeOpacity=".55" />
+    <path d="M12 32v-9a6 6 0 0 1 6-6h28a6 6 0 0 1 6 6v9" />
+    <path d="M12 32a6 6 0 0 0-6 6v9h52v-9a6 6 0 0 0-6-6" />
+    <path d="M12 41h40" />
+    <path d="M32 32v9" />
+    <path d="M14 47v6M50 47v6" />
   </svg>
 );
 
@@ -267,24 +254,16 @@ const CORNER_ICON = (
   <svg
     viewBox="0 0 64 64"
     fill="none"
-    aria-hidden="true"
     stroke="currentColor"
-    strokeWidth="2.2"
+    strokeWidth="3"
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    <path
-      d="M11 20a5 5 0 0 1 5-5h18a5 5 0 0 1 5 5v8H16a5 5 0 0 0-5 5z"
-      fill="currentColor"
-      fillOpacity=".10"
-    />
-    <path d="M11 33a5 5 0 0 1 5-5h18a5 5 0 0 1 5 5v16H16a5 5 0 0 1-5-5z" />
-    <path
-      d="M39 20a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v24a5 5 0 0 1-5 5H39z"
-      fill="currentColor"
-      fillOpacity=".10"
-    />
-    <path d="M39 28h9a5 5 0 0 1 5 5v11a5 5 0 0 1-5 5h-9M16 34h18m-18 7h18M17 49v6m27-6v6" />
+    <path d="M10 32v-9a6 6 0 0 1 6-6h20a6 6 0 0 1 6 6v9" />
+    <path d="M10 32a6 6 0 0 0-6 6v12h38V38a6 6 0 0 0-6-6" />
+    <path d="M42 41h12a6 6 0 0 1 6 6v3H42" />
+    <path d="M10 41h32" />
+    <path d="M12 50v6M54 50v6" />
   </svg>
 );
 
@@ -292,28 +271,15 @@ const ARMCHAIR_ICON = (
   <svg
     viewBox="0 0 64 64"
     fill="none"
-    aria-hidden="true"
     stroke="currentColor"
-    strokeWidth="2.2"
+    strokeWidth="3"
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    <path
-      d="M20 28v-8a5 5 0 0 1 5-5h14a5 5 0 0 1 5 5v8"
-      fill="currentColor"
-      fillOpacity=".10"
-    />
-    <path d="M20 29v-4a5 5 0 0 0-5 5v13a5 5 0 0 0 5 5h24a5 5 0 0 0 5-5V30a5 5 0 0 0-5-5v4" />
-    <rect
-      x="20"
-      y="28"
-      width="24"
-      height="15"
-      rx="4"
-      fill="currentColor"
-      fillOpacity=".10"
-    />
-    <path d="M24 31v9m16-9v9M22 48v7m20-7v7M15 35h5m24 0h5" />
+    <path d="M22 34V16a6 6 0 0 1 6-6h8a6 6 0 0 1 6 6v18" />
+    <path d="M22 30h-4a5 5 0 0 0-5 5v12h38V35a5 5 0 0 0-5-5h-4" />
+    <path d="M22 40h20" />
+    <path d="M18 47v6M46 47v6" />
   </svg>
 );
 
@@ -321,28 +287,16 @@ const CHAIR_ICON = (
   <svg
     viewBox="0 0 64 64"
     fill="none"
-    aria-hidden="true"
     stroke="currentColor"
-    strokeWidth="2.2"
+    strokeWidth="3"
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    <path
-      d="M22 14h20a4 4 0 0 1 4 4v16H18V18a4 4 0 0 1 4-4z"
-      fill="currentColor"
-      fillOpacity=".10"
-    />
-    <path d="M22 14h20a4 4 0 0 1 4 4v16H18V18a4 4 0 0 1 4-4z" />
-    <rect
-      x="18"
-      y="34"
-      width="28"
-      height="8"
-      rx="3"
-      fill="currentColor"
-      fillOpacity=".10"
-    />
-    <path d="M18 36h28M22 42l-2 13m22-13 2 13M25 42v7m14-7v7" />
+    <path d="M24 8v24M40 8v24" />
+    <path d="M24 14h16M24 22h16" />
+    <path d="M20 32h24" />
+    <path d="M22 32v22M42 32v22" />
+    <path d="M22 44h20" />
   </svg>
 );
 
@@ -350,24 +304,14 @@ const KITCHEN_ICON = (
   <svg
     viewBox="0 0 64 64"
     fill="none"
-    aria-hidden="true"
     stroke="currentColor"
-    strokeWidth="2.2"
+    strokeWidth="3"
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    <path
-      d="M10 26a5 5 0 0 1 5-5h17v28H15a5 5 0 0 1-5-5z"
-      fill="currentColor"
-      fillOpacity=".10"
-    />
-    <path d="M10 26a5 5 0 0 1 5-5h17v28H15a5 5 0 0 1-5-5z" />
-    <path
-      d="M32 31h17a5 5 0 0 1 5 5v8a5 5 0 0 1-5 5H32z"
-      fill="currentColor"
-      fillOpacity=".10"
-    />
-    <path d="M32 31h17a5 5 0 0 1 5 5v8a5 5 0 0 1-5 5H32M17 27v15m-7-7h22m5 1h12m-12 7h12M16 49v5m16-5v5m16-5v5" />
+    <path d="M12 10h40v10H22v32H12z" />
+    <path d="M12 16h40" />
+    <path d="M18 16v36" />
   </svg>
 );
 
@@ -683,11 +627,11 @@ function Calculator() {
     set(arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id]);
 
   const furnitureTypes = [
-    { id: "straight", name: "Прямой", icon: SOFA_ICON },
-    { id: "corner", name: "Угловой", icon: CORNER_ICON },
+    { id: "straight", name: "Прямой диван", icon: SOFA_ICON },
+    { id: "corner", name: "Угловой диван", icon: CORNER_ICON },
     { id: "armchair", name: "Кресло", icon: ARMCHAIR_ICON },
     { id: "chair", name: "Стул", icon: CHAIR_ICON },
-    { id: "kitchen", name: "Кухонный", icon: KITCHEN_ICON },
+    { id: "kitchen", name: "Кухонный уголок", icon: KITCHEN_ICON },
   ];
 
   const send = async () => {
